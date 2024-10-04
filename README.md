@@ -13,6 +13,7 @@
         * numpy
         * scipy
         * matplotlib
+        * pytest
 
 ## Recurring Setup
 
