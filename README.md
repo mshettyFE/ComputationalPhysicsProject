@@ -8,7 +8,7 @@
     * This sets up a virtual environment to install your libraries in
 * Run ```source Packages/bin/activate```
     * This spins up the virtual environment
-* Run ```pip install -r /path/to/requirements.txt```
+* Run ```pip install -r requirements.txt```
     * This downloads the libraries that we will use for the project. Currently, this is just
         * numpy
         * scipy
