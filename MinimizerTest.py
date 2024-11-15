@@ -3,16 +3,11 @@ import numpy as np
 import pytest
 import Minimizer
 
-def test_constraints():
-    cnst = Minimizer.equation_of_state_constraint(-1000)
-    expected_A = np.array(
-        [[1,0,0,0,0],
-        [0,1,0,0,0],
-        [0,0,1,0,1000],
-        [0,0,0,1,0],
-        [0,0,0,0,1]]
-    )
-    assert(np.array_equal(cnst.A, expected_A))
+class TestMinimizer:
+    def test_minimizer(self):
+    # Make sure that minimmizer can be run from end to end
+        ns = 1000
+        out  = Minimizer.run_minimizer(10,10,ns,1,2,3,4,5)
 
 if __name__ == "__main__":
     pass

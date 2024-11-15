@@ -28,6 +28,8 @@ class TestMinimizer:
             error = np.abs(actual_val-state[1])
             assert (error < tolerance)
             state = Integrator.RK4(derivative_func, state, step_size)
+    def test_ODESolver(self):
+        pass
 
 
 if __name__ == "__main__":
