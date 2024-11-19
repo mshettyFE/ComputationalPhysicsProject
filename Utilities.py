@@ -22,6 +22,7 @@ LUMINOSITY_UNIT_INDEX = 4
 TEMP_UNIT_INDEX = 5
 TIME_UNIT_INDEX = 6
 
+
 def UnitScalingFactors(R_0, M_0):
     """
     Returns the scaling factors to convert the unitless 
@@ -39,7 +40,7 @@ def UnitScalingFactors(R_0, M_0):
     M_out = np.float64(M_0)
     rho_out = M_0/(np.power(R_0,3))
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
-    P_out = M_0/(R_0*t_0*t_0)
+    P_out = M_0/(R_0*t_0*t_0) #Why is this written like this?
     L_out = (M_0*np.power(R_0,2)) / (np.power(t_0,3))
     T_out = (M_0*np.power(R_0,2)) / (t_0*t_0*Boltzman)
     return np.array([
@@ -51,7 +52,9 @@ def UnitScalingFactors(R_0, M_0):
            T_out
         ])
 
-def generate_extra_parameters(R_0, M_0, epsilon, kappa, mu):
+
+
+def generate_extra_parameters(R_0, M_0, epsilon, kappa, mu, E_0, alpha, beta):
     """
         Given the unitful parameters of the problem, generate the unitless constants to be used in the simulation
     Inputs:
@@ -68,14 +71,20 @@ def generate_extra_parameters(R_0, M_0, epsilon, kappa, mu):
     T_0 = scale_factors[TEMP_UNIT_INDEX]
     new_ep = epsilon * np.power(t_0,3)*M_0*np.power(T_0,4)* np.power(R_0,3)
     new_kp = kappa* (3/16*StefanBoltz)* M_0/ (np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3))
+    #this name is too long (see nuclear_energy below) - change from extra_const_params to "constants"?
     extra_const_params = {
         "mu": mu,
         "m_p_prime": m_p/M_0,
     "epsilon_prime": new_ep,
     "kappa_prime": new_kp,
+    "E_0": E_0,
+    "alpha": alpha,
+    "beta": beta
     }
 
     return extra_const_params
+
+
 
 def equation_of_state(P_prime, T_prime, extra_const_params):
     """
@@ -89,3 +98,17 @@ def equation_of_state(P_prime, T_prime, extra_const_params):
     """
     rho_prime = (P_prime*extra_const_params["mu"]* extra_const_params["m_p_prime"])/T_prime
     return rho_prime
+
+
+
+def nuclear_energy(rho_prime, T_prime, extra_const_params):
+    """
+        generate the nuclear energy production #rate? given the density and temperature
+        Input:
+            rho_prime: dimensionless density (np.float64)
+            T_prime: dimensionless temp (np.float64)
+        Output:
+            E_prime: dimensionless energy #rate?  (np.float64)
+    """
+    E_prime = (extra_const_params["E_0"])*rho_prime**(extra_const_params["alpha"])*T_prime**(extra_const_params["beta"])
+    return E_prime
