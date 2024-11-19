@@ -20,7 +20,7 @@ class TestMinimizer:
         start = 0
         stop  = 10
         step_size = (stop-start)/iterations
-        tolerance = 1E-1;
+        tolerance = 1E-9
         x = np.arange(0,10, step_size)
         assert(x.shape[0] == iterations)
         for i in range(iterations):

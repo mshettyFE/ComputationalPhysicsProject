@@ -1,30 +1,30 @@
 import numpy as np
 import scipy as sp;
-import Utilities
+from Utilities import *
 
 # Derivatives of the dependent variables.
 # Notably, density is absent. Use Utilities.equation_of_state to generate the density.
 def r_prime_der(current, extra_const_params):
-    new_r = (1/(4*np.pi))*(1/(np.power(current[Utilities.RADIUS_UNIT_INDEX],2)*current[Utilities.DENSITY_UNIT_INDEX]))
+    new_r = (1/(4*np.pi))*(1/(np.power(current[RADIUS_UNIT_INDEX],2)*current[DENSITY_UNIT_INDEX]))
     output = current
-    output[Utilities.RADIUS_UNIT_INDEX] = new_r
+    output[RADIUS_UNIT_INDEX] = new_r
     return new_r
 
 def P_prime_der(current, extra_const_params):
-    new_P = (-1/(4*np.pi))* (current[Utilities.MASS_UNIT_INDEX])/(np.power(current[Utilities.RADIUS_UNIT_INDEX], 4) )
+    new_P = (-1/(4*np.pi))* (current[MASS_UNIT_INDEX])/(np.power(current[RADIUS_UNIT_INDEX], 4) )
     output = current
-    output[Utilities.PRESSURE_UNIT_INDEX] = new_P
+    output[PRESSURE_UNIT_INDEX] = new_P
     return new_P
 
 def L_prime_der(current, extra_const_params):
-    # assume that epsilon_prime is in args
-    new_L = extra_const_params["epsilon_prime"]* current[Utilities.DENSITY_UNIT_INDEX]*np.power(current[Utilities.TEMP_UNIT_INDEX],4)
+    # assume that E_prime is in args
+    new_L = extra_const_params["E_prime"]* current[DENSITY_UNIT_INDEX]*np.power(current[TEMP_UNIT_INDEX],4)
     output = current
-    output[Utilities.LUMINOSITY_UNIT_INDEX] = new_L
+    output[LUMINOSITY_UNIT_INDEX] = new_L
     return new_L
 
 def T_prime_der(current, extra_const_params):
-    new_T = - extra_const_params["kappa_prime"]* current[Utilities.DENSITY_UNIT_INDEX] * current[Utilities.LUMINOSITY_UNIT_INDEX] * np.power(current[Utilities.RADIUS_UNIT_INDEX],-4) * np.power(current[Utilities.TEMP_UNIT_INDEX],-6.5)
+    new_T = - extra_const_params["kappa_prime"]* current[DENSITY_UNIT_INDEX] * current[LUMINOSITY_UNIT_INDEX] * np.power(current[RADIUS_UNIT_INDEX],-4) * np.power(current[TEMP_UNIT_INDEX],-6.5)
     return new_T #changed "output" to "new_i" for all functions.
 
 
@@ -100,15 +100,17 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters):
         #RK4 outputs a 6x1 array with elements of: mass, radius, pressure, luminosity, 
         #temperature, and density. Only the element corresponding to the differential equation (derivatives[n])
         #input into RK4 has the correct updated value.
-        state[0,i] = state[0,i-1] + step_size #Mass.
-        state[1,i] = RK4(derivatives[0], state[:,i-1], step_size)[1] #Radius.
-        state[2,i] = RK4(derivatives[1], state[:,i-1], step_size)[2] #Pressure.
-        state[3,i] = RK4(derivatives[2], state[:,i-1], step_size)[3] #Luminosity.
-        state[4,i] = RK4(derivatives[3], state[:,i-1], step_size)[4] #Temperature.
-        state[5,i] = Utilities.equation_of_state(state[2,i], state[4,i], extra_const_parameters) #Density.
+        state[MASS_UNIT_INDEX,i] = state[MASS_UNIT_INDEX,i-1] + step_size #Mass.
+        state[RADIUS_UNIT_INDEX,i] = RK4(derivatives[0], state[:,i-1], step_size)[RADIUS_UNIT_INDEX] #Radius.
+        state[PRESSURE_UNIT_INDEX,i] = RK4(derivatives[1], state[:,i-1], step_size)[PRESSURE_UNIT_INDEX] #Pressure.
+        state[LUMINOSITY_UNIT_INDEX,i] = RK4(derivatives[2], state[:,i-1], step_size)[PRESSURE_UNIT_INDEX] #Luminosity.
+        state[TEMP_UNIT_INDEX,i] = RK4(derivatives[3], state[:,i-1], step_size)[TEMP_UNIT_INDEX] #Temperature.
+        state[DENSITY_UNIT_INDEX,i] = equation_of_state(state[PRESSURE_UNIT_INDEX,i], state[TEMP_UNIT_INDEX,i], extra_const_parameters) #Density.
         #other places in the code need to be updated to reflect that "current" is now a 7x1 array:
-        state[6,i] = Utilities.nuclear_energy(state[5,i], state[4,i], extra_const_parameters) #Energy.
+
     
     return state
 
 
+
+#fix indexing based on Utilities file

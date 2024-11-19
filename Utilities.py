@@ -54,7 +54,7 @@ def UnitScalingFactors(R_0, M_0):
 
 
 
-def generate_extra_parameters(R_0, M_0, epsilon, kappa, mu, E_0, alpha, beta):
+def generate_extra_parameters(R_0, M_0, E_0, kappa, mu):
     """
         Given the unitful parameters of the problem, generate the unitless constants to be used in the simulation
     Inputs:
@@ -69,17 +69,14 @@ def generate_extra_parameters(R_0, M_0, epsilon, kappa, mu, E_0, alpha, beta):
     scale_factors = UnitScalingFactors(R_0, M_0)
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
     T_0 = scale_factors[TEMP_UNIT_INDEX]
-    new_ep = epsilon * np.power(t_0,3)*M_0*np.power(T_0,4)* np.power(R_0,3)
+    new_ep = E_0 * np.power(t_0,3)*M_0*np.power(T_0,4)* np.power(R_0,3)
     new_kp = kappa* (3/16*StefanBoltz)* M_0/ (np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3))
     #this name is too long (see nuclear_energy below) - change from extra_const_params to "constants"?
     extra_const_params = {
         "mu": mu,
         "m_p_prime": m_p/M_0,
-    "epsilon_prime": new_ep,
+    "E_prime": new_ep,
     "kappa_prime": new_kp,
-    "E_0": E_0,
-    "alpha": alpha,
-    "beta": beta
     }
 
     return extra_const_params
@@ -110,5 +107,7 @@ def nuclear_energy(rho_prime, T_prime, extra_const_params):
         Output:
             E_prime: dimensionless energy #rate?  (np.float64)
     """
-    E_prime = (extra_const_params["E_0"])*rho_prime**(extra_const_params["alpha"])*T_prime**(extra_const_params["beta"])
+    E_prime = (extra_const_params["E_prime"])*rho_prime**(1)*T_prime**(4)
     return E_prime
+
+#E is energy rate - change comments

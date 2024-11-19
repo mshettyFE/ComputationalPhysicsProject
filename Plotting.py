@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import Integrator
-from Utilities import UnitScalingFactors
+from Utilities import *
 
 if __name__ == "__main__":  # Main guard ensures this code runs only when the script is executed directly
 
@@ -12,21 +12,19 @@ if __name__ == "__main__":  # Main guard ensures this code runs only when the sc
 
     MSS = np.stack([state0, state1, state2], axis=2) #7x(step-size)x3 array. MSS = Multi-Star-States
     
-    radius = MSS[1,:,:] #Radius
+    radius = MSS[RADIUS_UNIT_INDEX,:,:] #Radius
     #Extracting variables to be plotted over all 3 initial conditions and all mass steps.
     variables = [
-        MSS[5,:,:], #Density
-        MSS[4,:,:], #Temperature
-        MSS[2,:,:], #Pressure
-        MSS[3,:,:], #Luminosity
-        MSS[6,:,:], #Energy
+        MSS[DENSITY_UNIT_INDEX,:,:], #Density
+        MSS[TEMP_UNIT_INDEX,:,:], #Temperature
+        MSS[PRESSURE_UNIT_INDEX,:,:], #Pressure
+        MSS[LUMINOSITY_UNIT_INDEX,:,:], #Luminosity
                 ]
-    labels = ['Density', 'Temperature', 'Pressure', 'Luminosity', 'Energy']
-    units = ['g/cm³', 'K', 'Pa', 'W', 'J'] #Replace with actual units
+    labels = ['Density', 'Temperature', 'Pressure', 'Luminosity']
+    units = ['g/cm³', 'K', 'Pa', 'W'] #Replace with actual units
 
 
     plt.figure(figsize=(20, 10)) 
-
     for j, (variable, label, unit) in enumerate(zip(variables, labels, units)): #Index associated with each variable = j.
         plt.subplot(3, 2, j + 1) #Creates a 3x2 grid of subplots.
         for i in range(3): #Loop over the three initial conditions.
@@ -40,3 +38,6 @@ if __name__ == "__main__":  # Main guard ensures this code runs only when the sc
     plt.tight_layout()
     plt.savefig('Radial_Dependency.png')
     plt.show()
+
+
+#unloop this: one variable for each figure.
