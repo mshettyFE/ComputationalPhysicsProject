@@ -2,15 +2,19 @@ import numpy as np
 import scipy as sp;
 from Utilities import *
 
+#           We can make this more efficient: there doesn't need to be different functions for each. Also, in 
+#ODESolver, we're running RK4 x5 times each iteration. See bottom of page for alternate
+
+
 # Derivatives of the dependent variables.
 # Notably, density is absent. Use Utilities.equation_of_state to generate the density.
-def r_prime_der(current, extra_const_params):
+def r_prime_der(current):
     new_r = (1/(4*np.pi))*(1/(np.power(current[RADIUS_UNIT_INDEX],2)*current[DENSITY_UNIT_INDEX]))
     output = current
     output[RADIUS_UNIT_INDEX] = new_r
     return new_r
 
-def P_prime_der(current, extra_const_params):
+def P_prime_der(current):
     new_P = (-1/(4*np.pi))* (current[MASS_UNIT_INDEX])/(np.power(current[RADIUS_UNIT_INDEX], 4) )
     output = current
     output[PRESSURE_UNIT_INDEX] = new_P
@@ -46,7 +50,7 @@ def RK4(f, current, step_size):
     step_size = np.float64(step_size)
     half_step_size = step_size/2
     
-    #k1-k4 are reference points for RK integration. Each derivative formula f gets current state input.
+    #k1-k4 are reference points for RK integration.
     k1 = f(current)
     new_input = current + half_step_size*k1 
     new_input[0] = current[0] + half_step_size
@@ -74,7 +78,6 @@ if __name__ == "__main__":
     pass
 
 
-
 #Iterates state of system thru RK4, creating an array of the key variables at each mass step.
 def ODESolver(initial_conditions, num_steps, extra_const_parameters):
     """
@@ -84,9 +87,9 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters):
         Outputs:
             state_matrix ( (6xnum_steps) np array):
                 The state of the system at each mass step in time. Needed for plotting reasons
-                The final state should be given by state_matrix[:,-1]
+                The final state is given by state_matrix[:,-1]
     """
-    assert(initial_conditions.shape[0] == 6)
+    #assert(initial_conditions.shape[0] == 6)
     assert(initial_conditions[0] == 0)
     step_size = 1/num_steps
     derivatives = [r_prime_der, P_prime_der, L_prime_der, T_prime_der] #array of differential equations.
@@ -106,11 +109,52 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters):
         state[LUMINOSITY_UNIT_INDEX,i] = RK4(derivatives[2], state[:,i-1], step_size)[PRESSURE_UNIT_INDEX] #Luminosity.
         state[TEMP_UNIT_INDEX,i] = RK4(derivatives[3], state[:,i-1], step_size)[TEMP_UNIT_INDEX] #Temperature.
         state[DENSITY_UNIT_INDEX,i] = equation_of_state(state[PRESSURE_UNIT_INDEX,i], state[TEMP_UNIT_INDEX,i], extra_const_parameters) #Density.
-        #other places in the code need to be updated to reflect that "current" is now a 7x1 array:
 
-    
     return state
+#------------------------------------------------------------------------------------------------------------
 
 
 
-#fix indexing based on Utilities file
+if __name__ == "__main__":
+    pass
+
+
+
+def derivatives(current, extra_const_params):
+    r_prime = (1/(4*np.pi*np.power(current[RADIUS_UNIT_INDEX],2)*current[DENSITY_UNIT_INDEX]))
+    P_prime = (-1/(4*np.pi))* (current[MASS_UNIT_INDEX])/(np.power(current[RADIUS_UNIT_INDEX], 4) )
+    L_prime = extra_const_params["E_prime"]* current[DENSITY_UNIT_INDEX]*np.power(current[TEMP_UNIT_INDEX],4)
+    T_prime = - extra_const_params["kappa_prime"]* current[DENSITY_UNIT_INDEX] * current[LUMINOSITY_UNIT_INDEX] * np.power(current[RADIUS_UNIT_INDEX],-4) * np.power(current[TEMP_UNIT_INDEX],-6.5)
+    return np.array([r_prime, P_prime, L_prime, T_prime])
+
+
+
+def RK4_Solver(initial_conditions, current, extra_const_params, step_size, step_num):
+    """
+    Inputs:
+        * initial_conditions: first entry of state_array
+        * current: encodes the current state of the system at mass m as a 6x1 np array
+                0th term is independent variable, and the rest are the dependent ones
+        * extra_const_params: see Utilities.py
+        * step_size: how big of a step in x do you want
+        * step_num: number of total steps
+    Outputs:
+        * state_array: all parameters at each mass step.
+    """
+    assert(step_size >0)
+
+    state_array = np.zeros((6,step_num)) #initializing array of variables.
+    state_array[:,0] = initial_conditions
+
+    for m in range(1, step_num):
+        state_array = np.append(state_array, current)
+        k1 = step_size*derivatives(current, extra_const_params)
+        k2 = step_size*derivatives(current + 0.5*k1, extra_const_params)
+        k3 = step_size*derivatives(current + 0.5*k2, extra_const_params)
+        k4 = step_size*(current + k3, extra_const_params)
+        
+        current[RADIUS_UNIT_INDEX,PRESSURE_UNIT_INDEX,LUMINOSITY_UNIT_INDEX,TEMP_UNIT_INDEX] += (k1 + 2*k2 + 2*k3 + k4)/6
+        current[MASS_UNIT_INDEX] = current[MASS_UNIT_INDEX] + step_size
+        current[DENSITY_UNIT_INDEX] = equation_of_state(current[PRESSURE_UNIT_INDEX], current[TEMP_UNIT_INDEX], extra_const_params)
+    
+    return state_array

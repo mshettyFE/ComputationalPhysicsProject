@@ -20,7 +20,7 @@ DENSITY_UNIT_INDEX = 2
 PRESSURE_UNIT_INDEX = 3
 LUMINOSITY_UNIT_INDEX = 4
 TEMP_UNIT_INDEX = 5
-TIME_UNIT_INDEX = 6
+TIME_UNIT_INDEX = 6 #???We are currently never using this - Kill???
 
 
 def UnitScalingFactors(R_0, M_0):
@@ -60,8 +60,8 @@ def generate_extra_parameters(R_0, M_0, E_0, kappa, mu):
     Inputs:
         R_0: Length Scale
         M_0: Mass Scale
-        epsilon: tuning parameter for luminosity equation
-        kappa: tuning parameter for temperature equation
+        epsilon: nuclear energy generation constant for luminosity equation [erg·cm^3/g^2/s]
+        kappa: opacity parameter for temperature equation [cm^2/g]
         mu: mean molecular weight in units of proton mass
     Output:
         extra_const_params: python dictionary containing the converted constant parameters
@@ -69,12 +69,12 @@ def generate_extra_parameters(R_0, M_0, E_0, kappa, mu):
     scale_factors = UnitScalingFactors(R_0, M_0)
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
     T_0 = scale_factors[TEMP_UNIT_INDEX]
-    new_ep = E_0 * np.power(t_0,3)*M_0*np.power(T_0,4)* np.power(R_0,3)
-    new_kp = kappa* (3/16*StefanBoltz)* M_0/ (np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3))
-    #this name is too long (see nuclear_energy below) - change from extra_const_params to "constants"?
+    new_ep = E_0 * np.power(t_0,3)*M_0*np.power(T_0,4)* np.power(R_0,3) #E_0 is dependent on the main reactants (proton-proton fusion for the Sun)
+    new_kp = kappa* (3/16*StefanBoltz)* M_0/ (np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3)) #kappa_0 is dependent on the region of interest and varies from 0.2 (core) to 0.01 (exterior)
+    
     extra_const_params = {
         "mu": mu,
-        "m_p_prime": m_p/M_0,
+        "m_p_prime": m_p/M_0, #???Why are we scaling the proton mass by the mass scale of the Sun? This is a constant parameter that we shouldn't have to scale???
     "E_prime": new_ep,
     "kappa_prime": new_kp,
     }
@@ -89,7 +89,7 @@ def equation_of_state(P_prime, T_prime, extra_const_params):
         Input:
             P_prime: dimensionless pressure (np.float64)
             T_prime: dimensionless temp (np.float64)
-            extra_const_params: 
+            extra_const_params: constant parameters.
         Output:
             rho_prime: dimensionless density  (np.float64)
     """
