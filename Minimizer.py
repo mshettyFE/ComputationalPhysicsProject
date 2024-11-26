@@ -3,10 +3,23 @@ import scipy as sp
 import Integrator
 import Utilities
 
+def gen_initial_conditions(starting_scaled_temp, starting_scaled_pressure, step_size, const_params):
+    initial_density =  Utilities.equation_of_state(starting_scaled_pressure, starting_scaled_temp,const_params)
+# encode the boundary conditions of m'= L' = r'=0, plug put in the initial temp and pressure guesses
+# We need to fudge the radius initial condition to avoid the singularity at r=0 in the equations.
+    initial_mass = step_size/2
+    initial_rad = np.power((4*np.pi/3)*initial_mass/initial_density, 1/3)
+#    initial_lum = const_params["E_prime"]*initial_density*np.power(starting_scaled_temp,4)* initial_mass
+    new_pressure = starting_scaled_pressure-(3/8/np.pi)*np.power((4*np.pi*initial_density/3),4/3)*np.power(initial_mass,2/3)
+    new_temp = new_pressure*const_params["mu"]/initial_density
+    initial_conds = np.array(  (initial_mass,initial_rad,initial_density,
+                                new_pressure , 0, new_temp) )
+    return initial_conds
+
 def loss_function(estimator_guess, *args):
     """
         Input:
-            estimator_guess: 2x1 numpy array of the form [temp, pressure]
+            estimator_guess: 2x1 numpy array of the form [temp, pressure]. These should be unitless
             *args: Expect two additional args: the ODE solver, and the number of steps the ODE solver should take
         Output:
             np.float64: the loss function for the given initial pressure and temp conditions
@@ -20,27 +33,21 @@ def loss_function(estimator_guess, *args):
 # Want temperature and pressure to be 0 at boundaries. These variables are mostly just for clarity
     expected_pressure = np.float64(0)
     expected_temp = np.float64(0)
-    expected_final_mass = 1
 # *args should of the form  [ODE solver,n_steps, extra_const_params]
     assert(len(args) == 3)
     solver, n_steps, const_params = args
-# encode the boundary conditions of m'= L' = r'=0, plug put in the initial temp and pressure guesses
-    initial_conds = np.array(  (0,0, Utilities.equation_of_state(initial_pressure, initial_temp,const_params),
-                                initial_pressure , 0,initial_temp) )
+    initial_conds = gen_initial_conditions(initial_temp, initial_pressure, 1/n_steps, const_params)
 # use the ODE solver to propagate the initial conditions to the final state
-# This signature might be wrong though since it hasn't been developed yet
     time_evolution = solver(initial_conds, n_steps, const_params)
     final_mass = time_evolution[Utilities.MASS_UNIT_INDEX,-1]
     final_pressure = time_evolution[Utilities.PRESSURE_UNIT_INDEX,-1]
     final_temp = time_evolution[Utilities.TEMP_UNIT_INDEX,-1]
-# Make sure that mass is 1
-    assert( (final_mass - expected_final_mass) < Utilities.global_tolerance)
     return   np.pow((final_pressure- expected_pressure),2) + np.pow(final_temp- expected_temp,2)
 
-def run_minimizer(Initial_T, Initial_P, num_iters, R_0, M_0, epsilon, kappa, mu):
-    x0 = np.array([Initial_T, Initial_P])
+def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsilon, kappa, mu):
+    x0 = np.array([Initial_scaled_T, Initial_scaled_P])
     solver = Integrator.ODESolver
-    extra_const_params = Utilities.generate_extra_parameters(R_0, M_0, epsilon, kappa, mu)
+    extra_const_params = Utilities.generate_extra_parameters(M_0, R_0, epsilon, kappa, mu)
     return sp.optimize.minimize(loss_function,x0, args=(solver,num_iters,extra_const_params))
 
 if __name__ == "__main__":

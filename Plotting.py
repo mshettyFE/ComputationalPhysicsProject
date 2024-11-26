@@ -15,7 +15,7 @@ if __name__ == "__main__":  # Main guard ensures this code runs only when the sc
 #TIME_UNIT_INDEX = 6 
 
 # Generate multi-star states with 3 sets of initial conditions. INPUT INITIAL CONDITIONS.
-state0 = Integrator.ODESolver([0,0,0,2.5E14,0,1.5E7], 100, generate_extra_parameters(R_sun, M_sun, 1.4E5, 0.2, mu_sun))  
+state0 = Integrator.ODESolver([0,0,0,2.5E14,0,1.5E7], 100, generate_extra_parameters(M_sun, R_sun, 1.4E5, 0.2, mu_sun))  
 state1 = Integrator.ODESolver([0,0,0,0,0,0], 100, generate_extra_parameters()) 
 state2 = Integrator.ODESolver([0,0,0,0,0,0], 100, generate_extra_parameters()) 
 
