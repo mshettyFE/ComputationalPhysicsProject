@@ -20,7 +20,7 @@ DENSITY_UNIT_INDEX = 2
 PRESSURE_UNIT_INDEX = 3
 LUMINOSITY_UNIT_INDEX = 4
 TEMP_UNIT_INDEX = 5
-TIME_UNIT_INDEX = 6 #???We are currently never using this - Kill???
+TIME_UNIT_INDEX = 6 #      We are currently never using this - Kill?
 
 
 def UnitScalingFactors(R_0, M_0):
@@ -36,31 +36,32 @@ def UnitScalingFactors(R_0, M_0):
     """
     assert(R_0 > 0)
     assert(M_0 > 0)
+    #The "out" variables are the coefficients which multiply the scaled variables and generate the orignal unit variables.
     R_out = np.float64(R_0)
     M_out = np.float64(M_0)
     rho_out = M_0/(np.power(R_0,3))
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
-    P_out = M_0/(R_0*t_0*t_0) #Why is this written like this?
+    P_out = M_0/(R_0*np.power(t_0,2))
     L_out = (M_0*np.power(R_0,2)) / (np.power(t_0,3))
-    T_out = (M_0*np.power(R_0,2)) / (t_0*t_0*Boltzman)
+    T_out = (M_0*np.power(R_0,2)) / (np.power(t_0,2)*Boltzman)
     return np.array([
             M_out,
             R_out,
             rho_out,
-           P_out,
-           L_out,
-           T_out
+            P_out,
+            L_out,
+            T_out
         ])
 
 
 
-def generate_extra_parameters(R_0, M_0, E_0, kappa, mu):
+def generate_extra_parameters(R_0, M_0, epsilon_0, kappa_0, mu):
     """
         Given the unitful parameters of the problem, generate the unitless constants to be used in the simulation
     Inputs:
-        R_0: Length Scale
-        M_0: Mass Scale
-        epsilon: nuclear energy generation constant for luminosity equation [erg·cm^3/g^2/s]
+        R_0: Length Scale (maximum radius)
+        M_0: Mass Scale (total mass)
+        epsilon_0: nuclear energy generation constant for luminosity equation [erg·cm^3/g^2/s] dependent on main fusion reaction (proton-proton in the Sun)
         kappa: opacity parameter for temperature equation [cm^2/g]
         mu: mean molecular weight in units of proton mass
     Output:
@@ -69,16 +70,15 @@ def generate_extra_parameters(R_0, M_0, E_0, kappa, mu):
     scale_factors = UnitScalingFactors(R_0, M_0)
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
     T_0 = scale_factors[TEMP_UNIT_INDEX]
-    new_ep = E_0 * np.power(t_0,3)*M_0*np.power(T_0,4)* np.power(R_0,3) #E_0 is dependent on the main reactants (proton-proton fusion for the Sun)
-    new_kp = kappa* (3/16*StefanBoltz)* M_0/ (np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3)) #kappa_0 is dependent on the region of interest and varies from 0.2 (core) to 0.01 (exterior)
+    eps_prime = epsilon_0 * np.power(t_0,3)*M_0*np.power(T_0,4)/np.power(R_0,5)
+    kp_prime = kappa_0* 3* np.power(M_0,3)/((16*StefanBoltz)*(np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3))) #kappa_0 is dependent on the region of interest and varies from 0.2 (core) to 0.01 (exterior)
     
     extra_const_params = {
         "mu": mu,
         "m_p_prime": m_p/M_0, #???Why are we scaling the proton mass by the mass scale of the Sun? This is a constant parameter that we shouldn't have to scale???
-    "E_prime": new_ep,
-    "kappa_prime": new_kp,
+        "eps_prime": eps_prime,
+        "kappa_prime": kp_prime,
     }
-
     return extra_const_params
 
 

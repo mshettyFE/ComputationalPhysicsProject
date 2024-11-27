@@ -115,46 +115,46 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters):
 
 
 
-if __name__ == "__main__":
-    pass
+# if __name__ == "__main__":
+#     pass
 
 
 
-def derivatives(current, extra_const_params):
-    r_prime = (1/(4*np.pi*np.power(current[RADIUS_UNIT_INDEX],2)*current[DENSITY_UNIT_INDEX]))
-    P_prime = (-1/(4*np.pi))* (current[MASS_UNIT_INDEX])/(np.power(current[RADIUS_UNIT_INDEX], 4) )
-    L_prime = extra_const_params["E_prime"]* current[DENSITY_UNIT_INDEX]*np.power(current[TEMP_UNIT_INDEX],4)
-    T_prime = - extra_const_params["kappa_prime"]* current[DENSITY_UNIT_INDEX] * current[LUMINOSITY_UNIT_INDEX] * np.power(current[RADIUS_UNIT_INDEX],-4) * np.power(current[TEMP_UNIT_INDEX],-6.5)
-    return np.array([r_prime, P_prime, L_prime, T_prime])
+# def derivatives(current, extra_const_params):
+#     r_prime = (1/(4*np.pi*np.power(current[RADIUS_UNIT_INDEX],2)*current[DENSITY_UNIT_INDEX]))
+#     P_prime = (-1/(4*np.pi))* (current[MASS_UNIT_INDEX])/(np.power(current[RADIUS_UNIT_INDEX], 4) )
+#     L_prime = extra_const_params["E_prime"]* current[DENSITY_UNIT_INDEX]*np.power(current[TEMP_UNIT_INDEX],4)
+#     T_prime = - extra_const_params["kappa_prime"]* current[DENSITY_UNIT_INDEX] * current[LUMINOSITY_UNIT_INDEX]/(np.power(current[RADIUS_UNIT_INDEX],4) * np.power(current[TEMP_UNIT_INDEX],6.5))
+#     return np.array([r_prime, P_prime, L_prime, T_prime])
 
 
 
-def RK4_Solver(initial_conditions, current, extra_const_params, step_size, step_num):
-    """
-    Inputs:
-        * initial_conditions: first entry of state_array
-        * current: encodes the current state of the system at mass m as a 6x1 np array
-                0th term is independent variable, and the rest are the dependent ones
-        * extra_const_params: see Utilities.py
-        * step_size: how big of a step in x do you want
-        * step_num: number of total steps
-    Outputs:
-        * state_array: all parameters at each mass step.
-    """
-    assert(step_size >0)
+# def RK4_Solver(initial_conditions, extra_const_params, step_size, step_num):
+#     """
+#     Inputs:
+#         * initial_conditions: first entry of state_array
+#         * current: encodes the current state of the system at mass m as a 6x1 np array
+#                 0th term is independent variable, and the rest are the dependent ones
+#         * extra_const_params: see Utilities.py
+#         * step_size: how big of a step in x do you want
+#         * step_num: number of total steps
+#     Outputs:
+#         * state_array: all parameters at each mass step.
+#     """
+#     assert(step_size >0)
 
-    state_array = np.zeros((6,step_num)) #initializing array of variables.
-    state_array[:,0] = initial_conditions
+#     state_array = np.zeros((6,step_num)) #initializing array of variables.
+#     current = initial_conditions
 
-    for m in range(1, step_num):
-        state_array = np.append(state_array, current)
-        k1 = step_size*derivatives(current, extra_const_params)
-        k2 = step_size*derivatives(current + 0.5*k1, extra_const_params)
-        k3 = step_size*derivatives(current + 0.5*k2, extra_const_params)
-        k4 = step_size*(current + k3, extra_const_params)
+#     for m in range(1, step_num):
+#         state_array = np.append(state_array, current)
+#         k1 = step_size*derivatives(current, extra_const_params)
+#         k2 = step_size*derivatives(current + 0.5*k1, extra_const_params)
+#         k3 = step_size*derivatives(current + 0.5*k2, extra_const_params)
+#         k4 = step_size*(current + k3, extra_const_params)
         
-        current[RADIUS_UNIT_INDEX,PRESSURE_UNIT_INDEX,LUMINOSITY_UNIT_INDEX,TEMP_UNIT_INDEX] += (k1 + 2*k2 + 2*k3 + k4)/6
-        current[MASS_UNIT_INDEX] = current[MASS_UNIT_INDEX] + step_size
-        current[DENSITY_UNIT_INDEX] = equation_of_state(current[PRESSURE_UNIT_INDEX], current[TEMP_UNIT_INDEX], extra_const_params)
+#         current[RADIUS_UNIT_INDEX,PRESSURE_UNIT_INDEX,LUMINOSITY_UNIT_INDEX,TEMP_UNIT_INDEX] += (k1 + 2*k2 + 2*k3 + k4)/6
+#         current[MASS_UNIT_INDEX] = current[MASS_UNIT_INDEX] + step_size
+#         current[DENSITY_UNIT_INDEX] = equation_of_state(current[PRESSURE_UNIT_INDEX], current[TEMP_UNIT_INDEX], extra_const_params)
     
-    return state_array
+#     return state_array
