@@ -33,6 +33,7 @@ if __name__ == "__main__":  # Main guard ensures this code runs only when the sc
 #TEMP_UNIT_INDEX = 5 [K]
 #TIME_UNIT_INDEX = 6 
 
+eps = 1e-6 #parameter to prevent divide by zero
 # Generate multi-star states with 3 sets of initial conditions. INPUT INITIAL CONDITIONS.
 conversion = UnitScalingFactors(M_sun, R_sun)
 constants = generate_extra_parameters(M_sun, R_sun, E_0_sun, kappa_0_sun, mu_sun)

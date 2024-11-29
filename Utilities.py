@@ -23,7 +23,7 @@ DENSITY_UNIT_INDEX = 2
 PRESSURE_UNIT_INDEX = 3
 LUMINOSITY_UNIT_INDEX = 4
 TEMP_UNIT_INDEX = 5
-TIME_UNIT_INDEX = 6
+TIME_UNIT_INDEX = 6 #      We are currently never using this - Kill?
 
 
 def UnitScalingFactors( M_0, R_0):
@@ -39,6 +39,7 @@ def UnitScalingFactors( M_0, R_0):
     """
     assert(R_0 > 0)
     assert(M_0 > 0)
+    #The "out" variables are the coefficients which multiply the scaled variables and generate the orignal unit variables.
     R_out = np.float64(R_0)
     M_out = np.float64(M_0)
     rho_out = M_0/(np.power(R_0,3))
@@ -50,20 +51,20 @@ def UnitScalingFactors( M_0, R_0):
             M_out,
             R_out,
             rho_out,
-           P_out,
-           L_out,
-           T_out,
-           t_0
+            P_out,
+            L_out,
+            T_out,
+           t_0 #        Shouldn't be here - 6x1 array.
         ])
 
 def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
     """
         Given the unitful parameters of the problem, generate the unitless constants to be used in the simulation
     Inputs:
-        R_0: Length Scale
-        M_0: Mass Scale
-        epsilon: nuclear energy generation constant for luminosity equation [J*m^3/kg^2/s]
-        kappa: opacity parameter for temperature equation [m^2/kg]
+        R_0: Length Scale (maximum radius)
+        M_0: Mass Scale (total mass)
+        epsilon_0: nuclear energy generation constant for luminosity equation [erg·cm^3/g^2/s] dependent on main fusion reaction (proton-proton in the Sun)
+        kappa: opacity parameter for temperature equation [cm^2/g]
         mu: mean molecular weight in units of proton mass
     Output:
         extra_const_params: python dictionary containing the converted constant parameters
