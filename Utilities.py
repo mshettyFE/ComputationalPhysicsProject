@@ -10,7 +10,6 @@ m_p = np.float64(1.67262192E-27) # kg
 M_sun = 1.989E30 # kg
 R_sun  = 6.9634E8 # m
 mu_sun = np.float64(0.6)
-#E_0_sun = 1.8E-39 # m^5/(kg s^3*K^4)
 E_0_sun = 1.8E-26 # m^5/(kg s^3*K^4)
 kappa_0_sun = .03 # m^2/kg
 
