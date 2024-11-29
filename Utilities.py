@@ -51,7 +51,7 @@ def UnitScalingFactors( M_0, R_0):
             P_out,
             L_out,
             T_out,
-           t_0
+           t_0 #        Shouldn't be here - 6x1 array.
         ])
 
 
@@ -76,7 +76,7 @@ def generate_extra_parameters(R_0, M_0, epsilon_0, kappa_0, mu):
     
     extra_const_params = {
         "mu": mu,
-        "m_p_prime": m_p/M_0, #???Why are we scaling the proton mass by the mass scale of the Sun? This is a constant parameter that we shouldn't have to scale???
+        "m_p_prime": m_p/M_0, #             Why are we scaling the proton mass by the mass scale of the Sun? This is a constant parameter that we shouldn't have to scale???
         "eps_prime": eps_prime,
         "kappa_prime": kp_prime,
     }
