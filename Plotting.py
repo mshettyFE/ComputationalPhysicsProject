@@ -1,7 +1,26 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import Integrator
+import Minimizer
 from Utilities import *
+
+def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx = False, logy = False, clear= True):
+    """
+    Helper function to plot variables in the mesh against each other
+    """
+    if (clear):
+        plt.clf()
+    plt.figure(figsize=(20, 10)) 
+    plt.title(title)
+    plt.xlabel(xlabel) 
+    plt.ylabel(ylabel)
+    if logx:
+        plt.xscale("log")
+    if logy:
+        plt.yscale("log")
+#    plt.grid(True)
+    plt.plot(independent, dependent)
+    plt.savefig(filename+'.png')
 
 if __name__ == "__main__":  # Main guard ensures this code runs only when the script is executed directly
     pass
@@ -15,33 +34,26 @@ if __name__ == "__main__":  # Main guard ensures this code runs only when the sc
 #TIME_UNIT_INDEX = 6 
 
 # Generate multi-star states with 3 sets of initial conditions. INPUT INITIAL CONDITIONS.
-state0 = Integrator.ODESolver([0,0,0,2.5E14,0,1.5E7], 100, generate_extra_parameters(M_sun, R_sun, 1.4E5, 0.2, mu_sun))  
-state1 = Integrator.ODESolver([0,0,0,0,0,0], 100, generate_extra_parameters()) 
-state2 = Integrator.ODESolver([0,0,0,0,0,0], 100, generate_extra_parameters()) 
-
-MSS = np.stack([state0, state1, state2], axis=2) #7x(step-size)x3 array. MSS = Multi-Star-States
+conversion = UnitScalingFactors(M_sun, R_sun)
+constants = generate_extra_parameters(M_sun, R_sun, E_0_sun, kappa_0_sun, mu_sun)
+print(constants)
+init_conds = Minimizer.gen_initial_conditions(1.5E7/conversion[TEMP_UNIT_INDEX], 26.5E6*1E9/conversion[PRESSURE_UNIT_INDEX],1E-2, constants)
+print(init_conds)
+state0 = Integrator.ODESolver(init_conds, 100, constants)
     
-radius = MSS[RADIUS_UNIT_INDEX,:,:] #Radius
+radius = state0[RADIUS_UNIT_INDEX,:] #Radius
 #Extracting variables to be plotted over all 3 initial conditions and all mass steps.
 variables = [
-MSS[DENSITY_UNIT_INDEX,:,:], #Density
-MSS[TEMP_UNIT_INDEX,:,:], #Temperature
-MSS[PRESSURE_UNIT_INDEX,:,:], #Pressure
-MSS[LUMINOSITY_UNIT_INDEX,:,:], #Luminosity
+state0[DENSITY_UNIT_INDEX,:], #Density
+state0[TEMP_UNIT_INDEX,:], #Temperature
+state0[PRESSURE_UNIT_INDEX,:], #Pressure
+state0[LUMINOSITY_UNIT_INDEX,:], #Luminosity
             ]
 labels = ['Density', 'Temperature', 'Pressure', 'Luminosity']
 units = ['g/cm³', 'K', 'Pa', 'W'] #Replace with actual units
-print(np.shape(variables))
-#Plot dimensionless dependent variable vs. radius:
-plt.figure(figsize=(20, 10)) 
-plt.title('Stellar Radial Dependency of Density')
-plt.xlabel('Radius') 
-plt.ylabel('Density')
-plt.grid(True)
-#for i in range(1,3):
-    #plt.plot(radius[:, i], variables[:, i], label=f'Initial Condition {i}') #Each variable is a 1xNx3 array, i.e. a 2D Nx3 array, so we iterate over each initial condition.
-#plt.legend()
-#plt.savefig('Density_R.png')
+plot_variable(radius, variables[0],'Stellar Radial Dependency of Density',"Density_R", 'Radius', 'Density', logy =True )
+plot_variable(radius, variables[1],'Stellar Radial Dependency of Temperature',"Temp_R", 'Radius', 'Temp', logy =True )
+plot_variable(radius, variables[2],'Stellar Radial Dependency of Pressure',"Pres_R", 'Radius', 'Pressure', logy =True )
+plot_variable(radius, variables[3],'Stellar Radial Dependency of Luminosity',"Lum_R", 'Radius', 'Luminosity', logy =True )
 
-
-#multiply array by x_out array from Utilities for last question of problem.
+print(variables[3])

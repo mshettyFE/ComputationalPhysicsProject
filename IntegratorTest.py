@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import Integrator
 
-def derivative_func(state):
+def derivative_func(state, extra):
     return -state
 
 
@@ -12,7 +12,7 @@ class TestMinimizer:
         """
             Use the IVP of dy/dt = -y. y(0) = 1.
             This should have the solution y(t) = e(-t)
-            We make 1000 steps, and then check against the analytic result
+            We make 1000 steps, and then check against the analytic result at each step
         """
         # Extraneous 0 after 1 because actual problem has 5 dependent variables
         state = np.array([0,1 ])
@@ -27,7 +27,7 @@ class TestMinimizer:
             actual_val = np.exp(-x[i])
             error = np.abs(actual_val-state[1])
             assert (error < tolerance)
-            state = Integrator.RK4(derivative_func, state, step_size)
+            state = Integrator.RK4(derivative_func, state, step_size,{})
     def test_ODESolver(self):
         pass
 

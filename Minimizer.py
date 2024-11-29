@@ -10,10 +10,10 @@ def gen_initial_conditions(starting_scaled_temp, starting_scaled_pressure, step_
     initial_mass = step_size/2
     initial_rad = np.power((4*np.pi/3)*initial_mass/initial_density, 1/3)
 #    initial_lum = const_params["E_prime"]*initial_density*np.power(starting_scaled_temp,4)* initial_mass
-    new_pressure = starting_scaled_pressure-(3/8/np.pi)*np.power((4*np.pi*initial_density/3),4/3)*np.power(initial_mass,2/3)
-    new_temp = new_pressure*const_params["mu"]/initial_density
+#    new_pressure = starting_scaled_pressure-(3/8/np.pi)*np.power((4*np.pi*initial_density/3),4/3)*np.power(initial_mass,2/3)
+#    new_temp = new_pressure*const_params["mu"]/initial_density
     initial_conds = np.array(  (initial_mass,initial_rad,initial_density,
-                                new_pressure , 0, new_temp) )
+                                starting_scaled_pressure , 0, starting_scaled_temp) )
     return initial_conds
 
 def loss_function(estimator_guess, *args):
@@ -28,8 +28,8 @@ def loss_function(estimator_guess, *args):
 # Temperature and pressure normally can't be negative
     initial_pressure  = estimator_guess[0]
     initial_temp  = estimator_guess[1]
-    assert(initial_pressure >= 0) 
-    assert(initial_temp >= 0)
+#    assert(initial_pressure >= 0) 
+#    assert(initial_temp >= 0)
 # Want temperature and pressure to be 0 at boundaries. These variables are mostly just for clarity
     expected_pressure = np.float64(0)
     expected_temp = np.float64(0)
@@ -48,7 +48,12 @@ def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsil
     x0 = np.array([Initial_scaled_T, Initial_scaled_P])
     solver = Integrator.ODESolver
     extra_const_params = Utilities.generate_extra_parameters(M_0, R_0, epsilon, kappa, mu)
-    return sp.optimize.minimize(loss_function,x0, args=(solver,num_iters,extra_const_params))
+    return sp.optimize.minimize(loss_function,x0,
+                                args=(solver,num_iters,extra_const_params),
+                                bounds=sp.optimize.Bounds(
+                                    lb=[Utilities.global_tolerance,Utilities.global_tolerance],
+                                    ub=[np.inf,np.inf], keep_feasible=[True,True]),
+                                )
 
 if __name__ == "__main__":
     pass

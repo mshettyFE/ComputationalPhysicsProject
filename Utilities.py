@@ -10,6 +10,9 @@ m_p = np.float64(1.67262192E-27) # kg
 M_sun = 1.989E30 # kg
 R_sun  = 6.9634E8 # m
 mu_sun = np.float64(0.6)
+#E_0_sun = 1.8E-39 # m^5/(kg s^3*K^4)
+E_0_sun = 1.8E-26 # m^5/(kg s^3*K^4)
+kappa_0_sun = .03 # m^2/kg
 
 # Numerical Resolution used throughout the sim
 global_tolerance = 1E-9
@@ -53,7 +56,6 @@ def UnitScalingFactors( M_0, R_0):
            t_0
         ])
 
-
 def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
     """
         Given the unitful parameters of the problem, generate the unitless constants to be used in the simulation
@@ -66,12 +68,15 @@ def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
     Output:
         extra_const_params: python dictionary containing the converted constant parameters
     """
-    scale_factors = UnitScalingFactors(M_0, R_0)
-    t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
-    T_0 = scale_factors[TEMP_UNIT_INDEX]
-    new_ep = E_0/(scale_factors[DENSITY_UNIT_INDEX]*np.power(T_0,4))*(M_0/scale_factors[LUMINOSITY_UNIT_INDEX])
-#    new_ep = E_0* np.power(t_0,3)*M_0*np.power(T_0,4)/ np.power(R_0,5) #E_0 is dependent on the main reactants (proton-proton fusion for the Sun)
-    new_kp = kappa* (3/(16*StefanBoltz)) * np.power(M_0,3)/ (np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3)) #kappa_0 is dependent on the region of interest and varies from 0.02 (core) to 0.001 (exterior)
+    _,_,rho0, P0,L0,T0,t0 = UnitScalingFactors(M_0, R_0)
+    ep_prefactor = np.power(R_0,5)*np.power(M_0,-1)*np.power(T0,-4)*np.power(t0,-3)
+    new_ep = E_0/ep_prefactor
+#    print("SCALED_EP: ", E_0, ep_prefactor, new_ep)
+
+    kp_prefactor = np.power(M_0,-2)*np.power(R_0,5)*np.power(T0,3.5)
+    kp_const_prefactor = (3/(16*StefanBoltz*np.power(4*np.pi,2) ))
+    new_kp = kp_const_prefactor*kappa/kp_prefactor
+#    print("SCALED_KP: ", kappa, kp_prefactor,kp_const_prefactor, new_kp)
     
     extra_const_params = {
         "mu": mu,
@@ -79,7 +84,7 @@ def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
     "kappa_prime": new_kp,
 #    "E_prime": E_0,
 #    "kappa_prime": kappa,
-    } 
+    }
 
     return extra_const_params
 
