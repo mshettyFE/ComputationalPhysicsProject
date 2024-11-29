@@ -56,7 +56,7 @@ def UnitScalingFactors( M_0, R_0):
 
 
 
-def generate_extra_parameters(R_0, M_0, epsilon_0, kappa_0, mu):
+def generate_extra_parameters(R_0, M_0, E_0, kappa_0, mu):
     """
         Given the unitful parameters of the problem, generate the unitless constants to be used in the simulation
     Inputs:
@@ -71,13 +71,13 @@ def generate_extra_parameters(R_0, M_0, epsilon_0, kappa_0, mu):
     scale_factors = UnitScalingFactors(M_0, R_0)
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
     T_0 = scale_factors[TEMP_UNIT_INDEX]
-    eps_prime = epsilon_0 * np.power(t_0,3)*M_0*np.power(T_0,4)/np.power(R_0,5)
+    E_prime = E_0 * np.power(t_0,3)*M_0*np.power(T_0,4)/np.power(R_0,5)
     kp_prime = kappa_0* 3* np.power(M_0,3)/((16*StefanBoltz)*(np.power(R_0,5)*np.power( T_0,7.5)* np.power(t_0,3))) #kappa_0 is dependent on the region of interest and varies from 0.2 (core) to 0.01 (exterior)
     
     extra_const_params = {
         "mu": mu,
         "m_p_prime": m_p/M_0, #             Why are we scaling the proton mass by the mass scale of the Sun? This is a constant parameter that we shouldn't have to scale???
-        "eps_prime": eps_prime,
+        "E_prime": E_prime,
         "kappa_prime": kp_prime,
     }
     return extra_const_params

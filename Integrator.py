@@ -103,7 +103,6 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters):
         state[LUMINOSITY_UNIT_INDEX,i] = RK4(derivatives[2], state[:,i-1], step_size,extra_const_parameters)[LUMINOSITY_UNIT_INDEX]
         state[TEMP_UNIT_INDEX,i] = RK4(derivatives[3], state[:,i-1], step_size,extra_const_parameters)[TEMP_UNIT_INDEX]
         state[DENSITY_UNIT_INDEX,i] = equation_of_state(state[PRESSURE_UNIT_INDEX,i], state[TEMP_UNIT_INDEX,i], extra_const_parameters)
-        print(state[:,i])
 
     return state
 #------------------------------------------------------------------------------------------------------------
