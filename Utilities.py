@@ -4,7 +4,7 @@ import numpy as np
 G = np.float64(6.6743E-11) # (Nm^{2})/(kg^{2})
 StefanBoltz = np.float64(5.67E-8) # W/(m^{2}K^{4})
 Boltzman = np.float64(1.380649E-23) # J/K
-m_p = np.float64(1.67262192E-27)
+m_p = np.float64(1.67262192E-27) # kg
 
 # Parameters for the Sun
 M_sun = 1.989E30 # kg
@@ -23,13 +23,13 @@ TEMP_UNIT_INDEX = 5
 TIME_UNIT_INDEX = 6 #      We are currently never using this - Kill?
 
 
-def UnitScalingFactors(R_0, M_0):
+def UnitScalingFactors( M_0, R_0):
     """
     Returns the scaling factors to convert the unitless 
     numbers in the sim to physical units.
     Inputs:
-        R_0: Length Scale
         M_0: Mass Scale
+        R_0: Length Scale
     Output:
         6x1 numpy array whose elements are the scaling factors.
         Use the *_UNIT_INDEX variables to get the corresponding scalings
@@ -43,14 +43,15 @@ def UnitScalingFactors(R_0, M_0):
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
     P_out = M_0/(R_0*np.power(t_0,2))
     L_out = (M_0*np.power(R_0,2)) / (np.power(t_0,3))
-    T_out = (M_0*np.power(R_0,2)) / (np.power(t_0,2)*Boltzman)
+    T_out = (m_p*np.power(R_0,2)) / (np.power(t_0,2)*Boltzman) # Using m_p here since T_out is the temp scale on a particle level, not on a star level
     return np.array([
             M_out,
             R_out,
             rho_out,
             P_out,
             L_out,
-            T_out
+            T_out,
+           t_0
         ])
 
 
@@ -67,7 +68,7 @@ def generate_extra_parameters(R_0, M_0, epsilon_0, kappa_0, mu):
     Output:
         extra_const_params: python dictionary containing the converted constant parameters
     """
-    scale_factors = UnitScalingFactors(R_0, M_0)
+    scale_factors = UnitScalingFactors(M_0, R_0)
     t_0 = np.sqrt(np.power(R_0,3) / (G*M_0))
     T_0 = scale_factors[TEMP_UNIT_INDEX]
     eps_prime = epsilon_0 * np.power(t_0,3)*M_0*np.power(T_0,4)/np.power(R_0,5)
@@ -93,7 +94,7 @@ def equation_of_state(P_prime, T_prime, extra_const_params):
         Output:
             rho_prime: dimensionless density  (np.float64)
     """
-    rho_prime = (P_prime*extra_const_params["mu"]* extra_const_params["m_p_prime"])/T_prime
+    rho_prime = (P_prime*extra_const_params["mu"])/T_prime
     return rho_prime
 
 
@@ -105,9 +106,7 @@ def nuclear_energy(rho_prime, T_prime, extra_const_params):
             rho_prime: dimensionless density (np.float64)
             T_prime: dimensionless temp (np.float64)
         Output:
-            E_prime: dimensionless energy #rate?  (np.float64)
+            E_prime: dimensionless energy #rate  (np.float64)
     """
     E_prime = (extra_const_params["E_prime"])*rho_prime**(1)*T_prime**(4)
     return E_prime
-
-#E is energy rate - change comments
