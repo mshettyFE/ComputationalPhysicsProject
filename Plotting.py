@@ -1,48 +1,49 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import Integrator
+import Minimizer
 from Utilities import *
 
+def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx = False, logy = False, clear= True):
+    """
+    Helper function to plot variables in the mesh against each other
+        Input:
+            independent: 1D numpy array of the independent variable
+            dependent: 1D numpy array of the dependent variable
+            title: title of the plot (string)
+            filename: Output file name of plot. Will write `filename`.png to current working directory
+            xlabel: label of xaxis (string)
+            ylabel: label of yaxis (string)
+            logx, logx: flags to indicate if you want the x/y axes to be log
+            clear: clear the previous plot before starting the new one. Set to False if you want to draw multiple curves with the same independent variable
+    """
+    if (clear):
+        plt.clf()
+    plt.figure(figsize=(20, 10)) 
+    plt.title(title)
+    plt.xlabel(xlabel) 
+    plt.ylabel(ylabel)
+    if logx:
+        plt.xscale("log")
+    if logy:
+        plt.yscale("log")
+#    plt.grid(True)
+    plt.plot(independent, dependent)
+    plt.savefig(filename+'.png')
+
 if __name__ == "__main__":  # Main guard ensures this code runs only when the script is executed directly
-    pass
-
-#MASS_UNIT_INDEX = 0 []
-#RADIUS_UNIT_INDEX = 1 []
-#DENSITY_UNIT_INDEX = 2 []
-#PRESSURE_UNIT_INDEX = 3 [dynes/cm^2]
-#LUMINOSITY_UNIT_INDEX = 4 []
-#TEMP_UNIT_INDEX = 5 [K]
-#TIME_UNIT_INDEX = 6 
-
-eps = 1e-6 #parameter to prevent divide by zeros
-# Generate multi-star states with 3 sets of initial conditions. INPUT INITIAL CONDITIONS.
-state0 = Integrator.ODESolver([0,eps,eps,2.5E14,0,1.5E7], 100, generate_extra_parameters(M_sun, R_sun, 1.4E5, 0.2, mu_sun))  
-state1 = Integrator.ODESolver([0,eps,eps,2.5E14,0,1.5E7], 100, generate_extra_parameters(M_sun, R_sun, 1.4E5, 0.2, mu_sun))  
-state2 = Integrator.ODESolver([0,eps,eps,2.5E14,0,1.5E7], 100, generate_extra_parameters(M_sun, R_sun, 1.4E5, 0.2, mu_sun))  
-
-
-MSS = np.stack([state0, state1, state2], axis=2) #7x(step-size)x3 array. MSS = Multi-Star-States
-    
-radius = MSS[RADIUS_UNIT_INDEX,:,:] #Radius
-#Extracting variables to be plotted over all 3 initial conditions and all mass steps.
-variables = [
-MSS[DENSITY_UNIT_INDEX,:,:], #Density
-MSS[TEMP_UNIT_INDEX,:,:], #Temperature
-MSS[PRESSURE_UNIT_INDEX,:,:], #Pressure
-MSS[LUMINOSITY_UNIT_INDEX,:,:], #Luminosity
-]
-labels = ['Density', 'Temperature', 'Pressure', 'Luminosity']
-units = ['g/cm³', 'K', 'Pa', 'W'] #Replace with actual units
-#Plot dimensionless dependent variable vs. radius:
-plt.figure(figsize=(20, 10)) 
-plt.title('Stellar Radial Dependency of Density')
-plt.xlabel('Radius') 
-plt.ylabel('Density')
-plt.grid(True)
-for i in range(1,3):
-    plt.plot(radius[:, i], variables[:, i], label=f'Initial Condition {i}') #Each variable is a 1xNx3 array, i.e. a 2D Nx3 array, so we iterate over each initial condition.
-plt.legend()
-plt.savefig('Density_R.png')
-
-
-#multiply array by x_out array from Utilities for last question of problem.
+    state0 = np.loadtxt("SunMesh.txt") # CHANGE THIS TO WHAT YOU NEED!
+    radius = state0[RADIUS_UNIT_INDEX,:]
+    #Extracting variables to be plotted over all 3 initial conditions and all mass steps.
+    variables = [
+    state0[DENSITY_UNIT_INDEX,:], #Density
+    state0[TEMP_UNIT_INDEX,:], #Temperature
+    state0[PRESSURE_UNIT_INDEX,:], #Pressure
+    state0[LUMINOSITY_UNIT_INDEX,:], #Luminosity
+                ]
+    labels = ['Density', 'Temperature', 'Pressure', 'Luminosity']
+    units = ['g/cm³', 'K', 'Pa', 'W'] #Replace with actual units
+    plot_variable(radius, variables[0],'Stellar Radial Dependency of Density',"Density_R", 'Radius', 'Density', logy =True )
+    plot_variable(radius, variables[1],'Stellar Radial Dependency of Temperature',"Temp_R", 'Radius', 'Temp', logy =True )
+    plot_variable(radius, variables[2],'Stellar Radial Dependency of Pressure',"Pres_R", 'Radius', 'Pressure', logy =True )
+    plot_variable(radius, variables[3],'Stellar Radial Dependency of Luminosity',"Lum_R", 'Radius', 'Luminosity', logy =True )
