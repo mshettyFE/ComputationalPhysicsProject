@@ -3,6 +3,14 @@ import scipy as sp
 import Integrator
 import Utilities
 
+#MASS_UNIT_INDEX = 0 []
+#RADIUS_UNIT_INDEX = 1 []
+#DENSITY_UNIT_INDEX = 2 []
+#PRESSURE_UNIT_INDEX = 3 [dynes/cm^2]
+#LUMINOSITY_UNIT_INDEX = 4 []
+#TEMP_UNIT_INDEX = 5 [K]
+#TIME_UNIT_INDEX = 6 
+
 def gen_initial_conditions(starting_scaled_temp, starting_scaled_pressure, step_size, const_params):
     initial_density =  Utilities.equation_of_state(starting_scaled_pressure, starting_scaled_temp,const_params)
 # encode the boundary conditions of m'= L' = r'=0, plug put in the initial temp and pressure guesses
