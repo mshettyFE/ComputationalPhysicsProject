@@ -13,11 +13,14 @@ import Utilities
 
 def gen_initial_conditions(starting_scaled_temp, starting_scaled_pressure, step_size, const_params):
     """
-        Helper function to deal with the fact that we can't start at m=0. We pretend that the central density is roughly constant, then fudge the boundary conditions a bit
-        starting_scaled_temp: the initial scaled temperature at the center of the star (unitless)
-        starting_scaled_pressure: same as temp, but for pressure
-        step_size: the mass step size to be taken (typically, this should be half a step size of your actual simulation)
-        const_params: dictionary containing the constant parameters of the problem. Generated from Utilities.generate_extra_parameters
+        Input:
+            Helper function to deal with the fact that we can't start at m=0. We pretend that the central density is roughly constant, then fudge the boundary conditions a bit
+            starting_scaled_temp: the initial scaled temperature at the center of the star (unitless)
+            starting_scaled_pressure: same as temp, but for pressure
+            step_size: the mass step size to be taken (typically, this should be half a step size of your actual simulation)
+            const_params: dictionary containing the constant parameters of the problem. Generated from Utilities.generate_extra_parameters
+        Output:
+            1x6 numpy array containing initial conditions in scaled variables
     """
     initial_density =  Utilities.equation_of_state(starting_scaled_pressure, starting_scaled_temp,const_params)
 # encode the boundary conditions of m'= L' = r'=0, plug put in the initial temp and pressure guesses
@@ -59,14 +62,17 @@ def loss_function(estimator_guess, *args):
 def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsilon, kappa, mu):
     """
         Helper function: to generate set up the minimizer and run it
-        Initial_scaled_T: Initial guess of temperature (unitless)
-        Initial_scaled_P: Initial guess of pressure (unitless)
-        num_iters: how many steps the integrator should take (int >0)
-        M_0: the relevant mass scale of the problem (kg)
-        R_0: The relevant distance scale of the problem (m)
-        epsilon: the e_0 parameter in the luminosity differential equation
-        kappa: the k_0 parameter in the temperature differential equation
-        mu: the mean molecular weight in units of proton mass
+            Input:
+                Initial_scaled_T: Initial guess of temperature (unitless)
+            Initial_scaled_P: Initial guess of pressure (unitless)
+            num_iters: how many steps the integrator should take (int >0)
+            M_0: the relevant mass scale of the problem (kg)
+            R_0: The relevant distance scale of the problem (m)
+            epsilon: the e_0 parameter in the luminosity differential equation
+            kappa: the k_0 parameter in the temperature differential equation
+            mu: the mean molecular weight in units of proton mass
+        Output:
+            OptimizeResult from scipy.optimize.minimize
     """
     x0 = np.array([Initial_scaled_T, Initial_scaled_P])
     solver = Integrator.ODESolver

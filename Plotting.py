@@ -1,7 +1,5 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import Integrator
-import Minimizer
 from Utilities import *
 
 def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx = False, logy = False, clear= True):
@@ -16,6 +14,8 @@ def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx 
             ylabel: label of yaxis (string)
             logx, logx: flags to indicate if you want the x/y axes to be log
             clear: clear the previous plot before starting the new one. Set to False if you want to draw multiple curves with the same independent variable
+        Output:
+            .png file with filename in current directory
     """
     if (clear):
         plt.clf()
@@ -33,7 +33,7 @@ def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx 
 
 if __name__ == "__main__":  # Main guard ensures this code runs only when the script is executed directly
     state0 = np.loadtxt("SunMesh.txt", delimiter=",") # CHANGE THIS TO WHAT YOU NEED!
-    radius = state0[:,RADIUS_UNIT_INDEX]
+    radius = state0[:,RADIUS_UNIT_INDEX] # state0 is a Nx6 2D numpy array
     #Extracting variables to be plotted over all 3 initial conditions and all mass steps.
     variables = [
     state0[:,DENSITY_UNIT_INDEX], #Density
