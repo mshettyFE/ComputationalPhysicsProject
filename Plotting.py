@@ -28,22 +28,22 @@ def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx 
     if logy:
         plt.yscale("log")
 #    plt.grid(True)
-    plt.plot(independent, dependent)
+    plt.scatter(independent, dependent)
     plt.savefig(filename+'.png')
 
 if __name__ == "__main__":  # Main guard ensures this code runs only when the script is executed directly
-    state0 = np.loadtxt("SunMesh.txt") # CHANGE THIS TO WHAT YOU NEED!
-    radius = state0[RADIUS_UNIT_INDEX,:]
+    state0 = np.loadtxt("SunMesh.txt", delimiter=",") # CHANGE THIS TO WHAT YOU NEED!
+    radius = state0[:,RADIUS_UNIT_INDEX]
     #Extracting variables to be plotted over all 3 initial conditions and all mass steps.
     variables = [
-    state0[DENSITY_UNIT_INDEX,:], #Density
-    state0[TEMP_UNIT_INDEX,:], #Temperature
-    state0[PRESSURE_UNIT_INDEX,:], #Pressure
-    state0[LUMINOSITY_UNIT_INDEX,:], #Luminosity
+    state0[:,DENSITY_UNIT_INDEX], #Density
+    state0[:,TEMP_UNIT_INDEX], #Temperature
+    state0[:,PRESSURE_UNIT_INDEX], #Pressure
+    state0[:,LUMINOSITY_UNIT_INDEX], #Luminosity
                 ]
     labels = ['Density', 'Temperature', 'Pressure', 'Luminosity']
     units = ['g/cm³', 'K', 'Pa', 'W'] #Replace with actual units
-    plot_variable(radius, variables[0],'Stellar Radial Dependency of Density',"Density_R", 'Radius', 'Density', logy =True )
-    plot_variable(radius, variables[1],'Stellar Radial Dependency of Temperature',"Temp_R", 'Radius', 'Temp', logy =True )
-    plot_variable(radius, variables[2],'Stellar Radial Dependency of Pressure',"Pres_R", 'Radius', 'Pressure', logy =True )
-    plot_variable(radius, variables[3],'Stellar Radial Dependency of Luminosity',"Lum_R", 'Radius', 'Luminosity', logy =True )
+    plot_variable(radius, variables[0],'Stellar Radial Dependency of Density',"Density_R", 'Radius', 'Density', logy =True, logx=True )
+    plot_variable(radius, variables[1],'Stellar Radial Dependency of Temperature',"Temp_R", 'Radius', 'Temp', logy =True , logx=True)
+    plot_variable(radius, variables[2],'Stellar Radial Dependency of Pressure',"Pres_R", 'Radius', 'Pressure', logy =True , logx=True)
+    plot_variable(radius, variables[3],'Stellar Radial Dependency of Luminosity',"Lum_R", 'Radius', 'Luminosity', logy =True , logx=True)

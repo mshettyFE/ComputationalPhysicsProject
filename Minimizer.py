@@ -51,10 +51,9 @@ def loss_function(estimator_guess, *args):
     initial_conds = gen_initial_conditions(initial_temp, initial_pressure, 1/n_steps, const_params)
 # use the ODE solver to propagate the initial conditions to the final state
     time_evolution = solver(initial_conds, n_steps, const_params)
-    print(time_evolution[Utilities.TEMP_UNIT_INDEX,:10])
-    final_mass = time_evolution[Utilities.MASS_UNIT_INDEX,-1]
-    final_pressure = time_evolution[Utilities.PRESSURE_UNIT_INDEX,-1]
-    final_temp = time_evolution[Utilities.TEMP_UNIT_INDEX,-1]
+    final_mass = time_evolution[-1,Utilities.MASS_UNIT_INDEX]
+    final_pressure = time_evolution[-1,Utilities.PRESSURE_UNIT_INDEX]
+    final_temp = time_evolution[-1,Utilities.TEMP_UNIT_INDEX]
     return   np.pow((final_pressure- expected_pressure),2) + np.pow(final_temp- expected_temp,2)
 
 def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsilon, kappa, mu):
