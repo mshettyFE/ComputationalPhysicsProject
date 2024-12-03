@@ -15,7 +15,7 @@ class TestMinimizer:
             We make 1000 steps, and then check against the analytic result at each step
         """
         # Extraneous 0 after 1 because actual problem has 5 dependent variables
-        state = np.array([0,1 ])
+        state = np.array([0,1,0,0,0,0 ])
         iterations = 1000
         start = 0
         stop  = 10
@@ -27,7 +27,7 @@ class TestMinimizer:
             actual_val = np.exp(-x[i])
             error = np.abs(actual_val-state[1])
             assert (error < tolerance)
-            state = Integrator.RK4(derivative_func, state, step_size,{})
+            state = state+Integrator.RK4(derivative_func, state, step_size,{})
     def test_ODESolver(self):
         pass
 

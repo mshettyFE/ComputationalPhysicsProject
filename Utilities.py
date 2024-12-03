@@ -10,8 +10,8 @@ m_p = np.float64(1.67262192E-27) # kg
 M_sun = 1.989E30 # kg
 R_sun  = 6.9634E8 # m
 mu_sun = np.float64(0.6)
-E_0_sun = 1.8E-26 # m^5/(kg s^3*K^4)
-kappa_0_sun = .03 # m^2/kg
+E_0_sun = 1.8E-29 # m^5/(kg s^3*K^4)
+kappa_0_sun = 3E-1 # m^2/kg
 
 # Numerical Resolution used throughout the sim
 global_tolerance = 1E-9
@@ -53,7 +53,7 @@ def UnitScalingFactors( M_0, R_0):
             P_out,
             L_out,
             T_out,
-           t_0 #        Shouldn't be here - 6x1 array.
+           t_0
         ])
 
 def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
