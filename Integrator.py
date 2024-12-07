@@ -28,7 +28,7 @@ def derivative_calc(current, extra_const_params):
     cur_t = current[TEMP_UNIT_INDEX]
     multiplied_vars = cur_t* current[RADIUS_UNIT_INDEX]
     var = np.power(multiplied_vars, -4)
-    tp = np.power(cur_t,-2.5)
+    tp = np.power(cur_t,-2.5) #!!!                   OVERFLOW/NaN being encountered               !!!
     new_T = - extra_const_params["kappa_prime"]* current[DENSITY_UNIT_INDEX] * current[LUMINOSITY_UNIT_INDEX] * var * tp 
     output[TEMP_UNIT_INDEX] = new_T
     output[MASS_UNIT_INDEX] = 1

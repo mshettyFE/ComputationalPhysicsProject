@@ -10,9 +10,9 @@ if __name__ == "__main__":
     m_steps = 1000 #Number of mass steps.
     #Initialization of multiple stars.
 
-    #!!!        M_star and R_star (also maybe E_0 &  kappa_0) need to be normalized beforethey are plugged into anything.
-    M_star = np.array([100,26.9,30,36,40,45,95,58,118]) #Array of stellar masses ranging from 1sol to 100sol.
-    R_star = np.array([92,8.3,76,103,25,200,20,86,22.3]) #Array of stellar radii corresponding to each M_star
+    #!!!        E_0 &  kappa_0 need to be normalized before they are plugged into anything       ???
+    M_star = np.array([100,26.9,30,36,40,45,95,58,118])*M_sun #Array of stellar masses ranging from 1sol to 100sol.
+    R_star = np.array([92,8.3,76,103,25,200,20,86,22.3])*R_sun #Array of stellar radii corresponding to each M_star
     E_0 = np.array([E_0_sun,E_0_sun,E_0_sun,E_0_sun,E_0_sun,E_0_sun,E_0_sun,E_0_sun,E_0_sun]) #Array of stellar energy rate constants corresponding to each M_star
     kappa_0 = np.array([kappa_0_sun,kappa_0_sun,kappa_0_sun,kappa_0_sun,kappa_0_sun,kappa_0_sun,kappa_0_sun,kappa_0_sun,kappa_0_sun]) #Array of stellar opacity constants corresponding to each M_star
     mu = np.array([mu_sun,mu_sun,mu_sun,mu_sun,mu_sun,mu_sun,mu_sun,mu_sun,mu_sun]) #Array of stellar molecular weight corresponding to each M_star
@@ -20,17 +20,16 @@ if __name__ == "__main__":
 
     for i in range(len(mu)):
         #Calls the necessary functions to run the program and generate the state array len(mu) times
-        #corresponding to len(mu) total data points.
-        scale_factors = UnitScalingFactors(M_star[i], R_star[i])
-        constants = generate_extra_parameters(M_star[i], R_star[i], E_0[i], kappa_0[i], mu[i])
+        #corresponding to len(mu) total data points/stars.
+        scale_factors = UnitScalingFactors(M_star[i], R_star[i]) #Scales parameters to unitless, ~ order(1).
+        constants = generate_extra_parameters(M_star[i], R_star[i], E_0[i], kappa_0[i], mu[i]) #Returns E_0_prime, kappa_0_prime, mu_prime which is grouped with other constants.
 
-        #!!!     Guesses need to scale with each radius.
-        PT_ideal = Minimizer.run_minimizer(2E7/scale_factors[TEMP_UNIT_INDEX],30E15/scale_factors[PRESSURE_UNIT_INDEX],
-            m_steps, M_star[i], R_star[i], constants["E_prime"], constants["kappa_prime"], mu[i])
-        init_conds = Minimizer.gen_initial_conditions(PT_ideal.x[0], PT_ideal.x[1],1E-2, constants)
-        state_array = Integrator.ODESolver(init_conds, m_steps, constants)
+        PT_ideal = Minimizer.run_minimizer(1E7/scale_factors[TEMP_UNIT_INDEX],1E16/scale_factors[PRESSURE_UNIT_INDEX], #Initial guess of temp[K] and pressure[Pa] of core is average enough to apply to the mass range of the sample stars.
+            m_steps, M_star[i], R_star[i], constants["E_prime"], constants["kappa_prime"], mu[i]) #Output is minimized unitless P and T.
+        init_conds = Minimizer.gen_initial_conditions(PT_ideal.x[0], PT_ideal.x[1],1E-2, constants) #Output is the other set of initial unitless parameters based on minimized P and T above.
+        state_array = Integrator.ODESolver(init_conds, m_steps, constants) #State array of parameters at each mass step. 
         #Preparing the plot by creating an array with the coordinates for all data points:
-        MRL_Mapping[i, :] = [M_star[i], R_star[i], state_array[m_steps-1, LUMINOSITY_UNIT_INDEX]]
+        MRL_Mapping[i, :] = [M_star[i], R_star[i], state_array[-1, LUMINOSITY_UNIT_INDEX]]
 
     #Generates scatter plot on 3D graph.
     fig = plt.figure()
@@ -66,7 +65,7 @@ if __name__ == "__main__":
                 )
 
     # Plot actual data points
-    ax.scatter(MRL_Data[:, 0], MRL_Data[:, 1], MRL_Data[:, 2], c='red', marker='o', label='Actual Data')
+    #ax.scatter(MRL_Data[:, 0], MRL_Data[:, 1], MRL_Data[:, 2], c='red', marker='o', label='Actual Data')
 
     # Add dashed lines for actual data points
     for i in range(MRL_Data.shape[0]):
