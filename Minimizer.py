@@ -84,5 +84,42 @@ def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsil
                                     ub=[np.inf,np.inf], keep_feasible=[True,True]),
                                 )
 
+def grid_search(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0,mu, grid_size=10, verbose=False):
+    """
+        Helper function: to generate set up the minimizer and run it
+            Input:
+                Initial_scaled_T: Initial guess of temperature (unitless)
+            Initial_scaled_P: Initial guess of pressure (unitless)
+            num_iters: how many steps the integrator should take (int >0)
+            M_0: the relevant mass scale of the problem (kg)
+            R_0: The relevant distance scale of the problem (m)
+            epsilon: the e_0 parameter in the luminosity differential equation
+            kappa: the k_0 parameter in the temperature differential equation
+            mu: the mean molecular weight in units of proton mass
+        Output:
+            OptimizeResult from scipy.optimize.minimize
+    """
+    epsilon_scaling = np.arange(-grid_size,grid_size+1)
+    kappa_scaling = np.arange(-grid_size,grid_size+1)
+    x0 = np.array([Initial_scaled_T, Initial_scaled_P])
+    solver = Integrator.ODESolver
+    output = []
+    for e_i, e in enumerate(epsilon_scaling):
+        for k_i, k in enumerate(kappa_scaling):
+            constants = Utilities.generate_extra_parameters(M_0, R_0, e*Utilities.E_0_sun, k*Utilities.kappa_0_sun, mu)
+            results = sp.optimize.minimize(loss_function,x0,
+                                args=(solver,num_iters,constants),
+                                bounds=sp.optimize.Bounds( # Hopefully, prevent Minimizer from guessing a negative temperature...
+                                    lb=[Utilities.global_tolerance,Utilities.global_tolerance],
+                                    ub=[np.inf,np.inf], keep_feasible=[True,True]),
+                                )
+            init_conds = gen_initial_conditions(results.x[0], results.x[1],1E-2, constants)
+            state0 = Integrator.ODESolver(init_conds, 1000, constants, verbose=True)  
+            if (verbose):
+                print(e_i,e, k_i, k, state0.shape)
+            if(state0.shape[0] != 1):
+                output.append((e,k, state0))
+    return output  
+
 if __name__ == "__main__":
     pass

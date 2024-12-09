@@ -96,8 +96,8 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters, verbose=Fal
         #temperature, and density. Only the element corresponding to the differential equation (derivatives[n])
         #input into RK4 has the correct updated value
         delta  = RK4(derivative_calc, cur_state, step_size, extra_const_parameters)
-        if(verbose):
-            print(i, cur_state, delta)
+#        if(verbose):
+#            print(i, cur_state, delta)
         if(np.any(np.isnan(delta))):
             break
         cur_state = cur_state +delta
