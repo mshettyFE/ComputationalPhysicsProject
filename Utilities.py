@@ -71,19 +71,17 @@ def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
     _,_,rho0, P0,L0,T0,t0 = UnitScalingFactors(M_0, R_0)
     ep_prefactor = np.power(R_0,5)*np.power(M_0,-1)*np.power(T0,-4)*np.power(t0,-3)
     new_ep = E_0/ep_prefactor
-#    print("SCALED_EP: ", E_0, ep_prefactor, new_ep)
+
 
     kp_prefactor = np.power(M_0,-2)*np.power(R_0,5)*np.power(T0,3.5)
     kp_const_prefactor = (3/(16*StefanBoltz*np.power(4*np.pi,2) ))
     new_kp = kp_const_prefactor*kappa/kp_prefactor
-#    print("SCALED_KP: ", kappa, kp_prefactor,kp_const_prefactor, new_kp)
+
     
     extra_const_params = {
         "mu": mu,
     "E_prime": new_ep,
     "kappa_prime": new_kp,
-#    "E_prime": E_0,
-#    "kappa_prime": kappa,
     }
 
     return extra_const_params
@@ -107,12 +105,12 @@ def equation_of_state(P_prime, T_prime, extra_const_params):
 
 def nuclear_energy(rho_prime, T_prime, extra_const_params):
     """
-        generate the nuclear energy production #rate? given the density and temperature
+        generate the nuclear energy production rate given the density and temperature
         Input:
-            rho_prime: dimensionless density (np.float64)
-            T_prime: dimensionless temp (np.float64)
+            rho_prime: dimensionless density
+            T_prime: dimensionless temperature
         Output:
-            E_prime: dimensionless energy #rate  (np.float64)
+            E_prime: dimensionless energy rate
     """
     E_prime = (extra_const_params["E_prime"])*rho_prime**(1)*T_prime**(4)
     return E_prime
