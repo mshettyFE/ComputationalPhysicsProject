@@ -3,13 +3,8 @@ import scipy as sp
 import Integrator
 import Utilities
 
-#MASS_UNIT_INDEX = 0 []
-#RADIUS_UNIT_INDEX = 1 []
-#DENSITY_UNIT_INDEX = 2 []
-#PRESSURE_UNIT_INDEX = 3 [dynes/cm^2]
-#LUMINOSITY_UNIT_INDEX = 4 []
-#TEMP_UNIT_INDEX = 5 [K]
-#TIME_UNIT_INDEX = 6 
+# Minimum bound on tolea
+bound_tol = 1E-9
 
 def gen_initial_conditions(starting_scaled_temp, starting_scaled_pressure, step_size, const_params):
     """
@@ -40,11 +35,8 @@ def loss_function(estimator_guess, *args):
             np.float64: the loss function for the given initial pressure and temp conditions
     """
 # We assume that estimator has dimensions 2x1
-# Temperature and pressure normally can't be negative
     initial_pressure  = estimator_guess[0]
     initial_temp  = estimator_guess[1]
-#    assert(initial_pressure >= 0) 
-#    assert(initial_temp >= 0)
 # Want temperature and pressure to be 0 at boundaries. These variables are mostly just for clarity
     expected_pressure = np.float64(0)
     expected_temp = np.float64(0)
@@ -54,9 +46,9 @@ def loss_function(estimator_guess, *args):
     initial_conds = gen_initial_conditions(initial_temp, initial_pressure, 1/n_steps, const_params)
 # use the ODE solver to propagate the initial conditions to the final state
     time_evolution = solver(initial_conds, n_steps, const_params)
-    final_mass = time_evolution[-1,Utilities.MASS_UNIT_INDEX]
     final_pressure = time_evolution[-1,Utilities.PRESSURE_UNIT_INDEX]
     final_temp = time_evolution[-1,Utilities.TEMP_UNIT_INDEX]
+# Create concave function to minimize
     return   np.pow((final_pressure- expected_pressure),2) + np.pow(final_temp- expected_temp,2)
 
 def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsilon, kappa, mu):
@@ -80,22 +72,21 @@ def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsil
     return sp.optimize.minimize(loss_function,x0,
                                 args=(solver,num_iters,extra_const_params),
                                 bounds=sp.optimize.Bounds( # Hopefully, prevent Minimizer from guessing a negative temperature...
-                                    lb=[Utilities.global_tolerance,Utilities.global_tolerance],
+                                    lb=[bound_tol,bound_tol],
                                     ub=[np.inf,np.inf], keep_feasible=[True,True]),
                                 )
 
 def grid_search(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0,mu, grid_size=10, verbose=False):
     """
-        Helper function: to generate set up the minimizer and run it
-            Input:
-                Initial_scaled_T: Initial guess of temperature (unitless)
+        Helper function: to perform a grid search in epsilon and kappa to find the correct order of magnitude for both
+            Initial_scaled_T: Initial guess of temperature (unitless)
             Initial_scaled_P: Initial guess of pressure (unitless)
             num_iters: how many steps the integrator should take (int >0)
             M_0: the relevant mass scale of the problem (kg)
             R_0: The relevant distance scale of the problem (m)
-            epsilon: the e_0 parameter in the luminosity differential equation
-            kappa: the k_0 parameter in the temperature differential equation
             mu: the mean molecular weight in units of proton mass
+            grid_size: Number of orders of magnitude to crawl through in one direction
+            verbose: debugging variable
         Output:
             OptimizeResult from scipy.optimize.minimize
     """
@@ -109,14 +100,15 @@ def grid_search(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0,mu, grid
             constants = Utilities.generate_extra_parameters(M_0, R_0, e*Utilities.E_0_sun, k*Utilities.kappa_0_sun, mu)
             results = sp.optimize.minimize(loss_function,x0,
                                 args=(solver,num_iters,constants),
-                                bounds=sp.optimize.Bounds( # Hopefully, prevent Minimizer from guessing a negative temperature...
-                                    lb=[Utilities.global_tolerance,Utilities.global_tolerance],
+                                bounds=sp.optimize.Bounds(
+                                    lb=[bound_tol,bound_tol],
                                     ub=[np.inf,np.inf], keep_feasible=[True,True]),
                                 )
             init_conds = gen_initial_conditions(results.x[0], results.x[1],1E-2, constants)
             state0 = Integrator.ODESolver(init_conds, 1000, constants, verbose=True)  
             if (verbose):
                 print(e_i,e, k_i, k, state0.shape)
+            # If the integrator made it past the first step, save the grid point and output
             if(state0.shape[0] != 1):
                 output.append((e,k, state0))
     return output  

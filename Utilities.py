@@ -13,16 +13,13 @@ mu_sun = np.float64(0.6)
 E_0_sun = 1.8E-29 # m^5/(kg s^3*K^4)
 kappa_0_sun = 3E-1 # m^2/kg
 
-# Numerical Resolution used throughout the sim
-global_tolerance = 1E-9
-
 MASS_UNIT_INDEX = 0
 RADIUS_UNIT_INDEX = 1
 DENSITY_UNIT_INDEX = 2
 PRESSURE_UNIT_INDEX = 3
 LUMINOSITY_UNIT_INDEX = 4
 TEMP_UNIT_INDEX = 5
-TIME_UNIT_INDEX = 6 #      We are currently never using this - Kill?
+TIME_UNIT_INDEX = 6
 
 
 def UnitScalingFactors( M_0, R_0):
@@ -38,7 +35,7 @@ def UnitScalingFactors( M_0, R_0):
     """
     assert(R_0 > 0)
     assert(M_0 > 0)
-    #The "out" variables are the coefficients which multiply the scaled variables and generate the orignal unit variables.
+    #The "out" variables are the coefficients which multiply the scaled variables and generate the original unit variables.
     R_out = np.float64(R_0)
     M_out = np.float64(M_0)
     rho_out = M_0/(np.power(R_0,3))

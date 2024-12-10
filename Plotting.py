@@ -27,7 +27,6 @@ def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx 
         plt.xscale("log")
     if logy:
         plt.yscale("log")
-#    plt.grid(True)
     plt.scatter(independent, dependent)
     plt.savefig(filename+'.png')
 
