@@ -35,6 +35,7 @@ def loss_function(estimator_guess, *args):
             np.float64: the loss function for the given initial pressure and temp conditions
     """
 # We assume that estimator has dimensions 2x1
+#    print(estimator_guess)
     initial_pressure  = estimator_guess[0]
     initial_temp  = estimator_guess[1]
 # Want temperature and pressure to be 0 at boundaries. These variables are mostly just for clarity
@@ -71,6 +72,7 @@ def run_minimizer(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0, epsil
     extra_const_params = Utilities.generate_extra_parameters(M_0, R_0, epsilon, kappa, mu)
     return sp.optimize.minimize(loss_function,x0,
                                 args=(solver,num_iters,extra_const_params),
+                                method =  "L-BFGS-B",
                                 bounds=sp.optimize.Bounds( # Hopefully, prevent Minimizer from guessing a negative temperature...
                                     lb=[bound_tol,bound_tol],
                                     ub=[np.inf,np.inf], keep_feasible=[True,True]),

@@ -53,17 +53,28 @@ def RK4(f, current, step_size, extra_const_params):
     #k1-k4 are reference points for RK integration.
     k1 = f(current,extra_const_params)
     new_input = current + half_step_size*k1 
-
+    # Need to update density after each k calculation
+    new_input[DENSITY_UNIT_INDEX] = equation_of_state(new_input[PRESSURE_UNIT_INDEX], new_input[TEMP_UNIT_INDEX], extra_const_params)
+    if(np.any(np.isnan(new_input))):
+        return np.nan
     k2 = f(new_input,extra_const_params)
     
     new_input =current + half_step_size*k2 
+    new_input[DENSITY_UNIT_INDEX] = equation_of_state(new_input[PRESSURE_UNIT_INDEX], new_input[TEMP_UNIT_INDEX], extra_const_params)
+    if(np.any(np.isnan(new_input))):
+        return np.nan
     k3 = f(new_input,extra_const_params)
-
     new_input = current+step_size*k3
+    new_input[DENSITY_UNIT_INDEX] = equation_of_state(new_input[PRESSURE_UNIT_INDEX], new_input[TEMP_UNIT_INDEX], extra_const_params)
+    if(np.any(np.isnan(new_input))):
+        return np.nan
     
     k4 = f(new_input,extra_const_params)
-    update = (step_size/6) * (k1+2*k2+2*k3+k4)
 
+    update = (step_size/6) * (k1+2*k2+2*k3+k4)
+    update[DENSITY_UNIT_INDEX] = equation_of_state(update[PRESSURE_UNIT_INDEX], update[TEMP_UNIT_INDEX], extra_const_params)
+    if(np.any(np.isnan(update))):
+        return np.nan
     # Return change in variables
     return update
 

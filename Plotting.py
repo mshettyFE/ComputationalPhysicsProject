@@ -32,6 +32,7 @@ def plot_variable(independent, dependent, title, filename, xlabel, ylabel, logx 
 
 if __name__ == "__main__":  # Main guard ensures this code runs only when the script is executed directly
     state0 = np.loadtxt("SunMesh.txt", delimiter=",") # CHANGE THIS TO WHAT YOU NEED!
+    print(state0.shape)
     radius = state0[:,RADIUS_UNIT_INDEX] # state0 is a Nx6 2D numpy array
     #Extracting variables to be plotted over all 3 initial conditions and all mass steps.
     variables = [

@@ -29,15 +29,11 @@ if __name__ == "__main__":
         init_conds = Minimizer.gen_initial_conditions(PT_ideal.x[0], PT_ideal.x[1],1E-2, constants) #Output is the other set of initial unitless parameters based on minimized P and T above.
         state_array = Integrator.ODESolver(init_conds, m_steps, constants) #State array of parameters at each mass step. 
         #Preparing the plot by creating an array with the coordinates for all data points:
-        MRL_Mapping[i, :] = [M_star[i], R_star[i], state_array[-1, LUMINOSITY_UNIT_INDEX]]
+        MRL_Mapping[i, :] = [M_star[i], state_array[-1, RADIUS_UNIT_INDEX], state_array[-1, LUMINOSITY_UNIT_INDEX]]
 
+    print(MRL_Mapping)
     #Generates scatter plot on 3D graph.
-    fig = plt.figure()
-    plt.title('Total Stellar Mass, Radius, and Luminosity')
-    ax = fig.add_subplot(111, projection="3d")
-    ax.set_xlabel("Mass")
-    ax.set_ylabel("Radius")
-    ax.set_zlabel("Luminosity")
+    fig, ax1 = plt.subplots()
     
     #Actual data:
     MRL_Data = np.array([
@@ -53,35 +49,41 @@ if __name__ == "__main__":
 
     
     # Plot computed data points
-    ax.scatter(MRL_Mapping[:, 0], MRL_Mapping[:, 1], MRL_Mapping[:, 2], c='blue', marker='o', label='Computed Data')
+    plt.title('Total Stellar Mass versus Radius')
+    ax1.set_xlabel("Mass")
+    ax1.set_ylabel("Rad")
+    ax1.scatter(MRL_Mapping[:, 0], MRL_Mapping[:, 1], c='blue', marker='o', label='Computed Data')
+    ax1.legend()
+    plt.savefig('MR')
+
+    ax1.clear()
+    plt.title('Total Stellar Mass versus Radius')
+    ax1.set_xlabel("Mass")
+    ax1.set_ylabel("Rad")
+    ax1.scatter(MRL_Mapping[:, 0], MRL_Mapping[:, 2], c='blue', marker='o', label='Computed Data')
+    ax1.legend()
+    plt.savefig('ML')
 
     # Add dashed lines for computed data points
-    for i in range(MRL_Mapping.shape[0]):
-        ax.plot(
-        [MRL_Mapping[i, 0], MRL_Mapping[i, 0]],  # Fixed Mass (X-axis)
-        [MRL_Mapping[i, 1], MRL_Mapping[i, 1]],  # Fixed Radius (Y-axis)
-        [0, MRL_Mapping[i, 2]],  # From Z=0 to Z=Luminosity
-        linestyle='--', color='blue', alpha=0.5
-                )
+#    for i in range(MRL_Mapping.shape[0]):
+#        ax.plot(
+#        [MRL_Mapping[i, 0], MRL_Mapping[i, 0]],  # Fixed Mass (X-axis)
+#        [MRL_Mapping[i, 1], MRL_Mapping[i, 1]],  # Fixed Radius (Y-axis)
+#        [0, MRL_Mapping[i, 2]],  # From Z=0 to Z=Luminosity
+#        linestyle='--', color='blue', alpha=0.5
+#                )
 
     # Plot actual data points
     #ax.scatter(MRL_Data[:, 0], MRL_Data[:, 1], MRL_Data[:, 2], c='red', marker='o', label='Actual Data')
 
     # Add dashed lines for actual data points
-    for i in range(MRL_Data.shape[0]):
-        ax.plot(
-            [MRL_Data[i, 0], MRL_Data[i, 0]],  # Fixed Mass (X-axis)
-            [MRL_Data[i, 1], MRL_Data[i, 1]],  # Fixed Radius (Y-axis)
-            [0, MRL_Data[i, 2]],  # From Z=0 to Z=Luminosity
-            linestyle='--', color='red', alpha=0.5
-                )
-
-    # Add legend
-    ax.legend()
-
-    # Save and display the plot
-    plt.savefig('MRL')
-
+#    for i in range(MRL_Data.shape[0]):
+#        ax.plot(
+#            [MRL_Data[i, 0], MRL_Data[i, 0]],  # Fixed Mass (X-axis)
+#            [MRL_Data[i, 1], MRL_Data[i, 1]],  # Fixed Radius (Y-axis)
+#            [0, MRL_Data[i, 2]],  # From Z=0 to Z=Luminosity
+#            linestyle='--', color='red', alpha=0.5
+#                )
   
    
     
