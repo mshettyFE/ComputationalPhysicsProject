@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from enum import Enum
 
 # values of fundamental constants in SI units
@@ -97,10 +98,10 @@ def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
 
 def equation_of_state(p_state,t_state, extra_const_params):
     """
-        generate the density given the pressure and temperature
+        generate the density at the shell boundaries given the pressure and temperature
         Input:
             p_state: k-1 np array of dimensionless pressures where k is number of shells
-            t_state: np array of dimensionless temp. Same size as P_prime
+            t_state: np array of dimensionless temp. Same size as p_state
             extra_const_params: constant parameters dictionary
         Output:
             array of densities. same size as p_state
@@ -121,6 +122,29 @@ def nuclear_energy(rho_prime, T_prime, extra_const_params):
 
 # State vector manipulation
 
+def gen_state_vector(n_shells, test=False):
+    """
+        Input: 
+        Output:
+            state_vector: 4k dimensional vector
+            Assume state_vector has the following form:
+                <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>
+            starting_indices:
+                Dictionary of starting indices for each variable in state vector
+    """
+    if(test):
+        rad = 2*np.ones(n_shells)
+        pres = 3*np.ones(n_shells)
+        temp = 5*np.ones(n_shells)
+        lum = 7*np.ones(n_shells)
+        output = np.concatenate([rad, pres, temp, lum], axis=None)
+    else:
+        #TODO: Makes these guesses realistic. For now, just panic
+        print("Make better guesses please")
+        sys.exit(1)
+    starting_indices = gen_starting_index(output)
+    return output, starting_indices
+
 def average_adjacent(vector):
     """
         generate average of adjacent elements in a vector
@@ -135,8 +159,7 @@ def average_adjacent(vector):
 
 def gen_starting_index(state_vector):
     """
-        Assumes that state_vector has the following form:
-        <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>
+        Assumes that state_vector was generated in gen_state_vector()
         Input:
             state_vector: 4k dimensional array where k is the number of mass shells
         Output:
@@ -153,12 +176,14 @@ def gen_starting_index(state_vector):
     starting_indices[StateVectorVar.LUMINOSITY] = n_shells*3
     return starting_indices
 
-def stich_vector(state_vector, starting_indices):
+def stitch_vector(state_vector, starting_indices):
     """
         Given a state vector, remove the elements which do not change (ie. the 0 boundary conditions).
-        This involves removing r_0,P_{k-1}, T_{k-1},L_0 where k is the number of shells
+        This involves removing r_0,P_{k-1}, T_{k-1},L_0 where k is the number of shells.
+        This is done to preserve the boundary conditions of the system (the removed elements are all 0).
+        By removing these elements, we prevent the Jacobian from going singular.
         Assumes that state_vector has the following form:
-        <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>
+        <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>, where k is the number of shells
         Input:
             state_vector: 4k dimensional array where k is the number of mass shells
             starting_indices: The starting index of each variable (use gen_starting_index to produce)
@@ -186,4 +211,44 @@ def stich_vector(state_vector, starting_indices):
     output[starting_p-1:starting_p+n_shells-2] = pressure_part 
     output[starting_temp-2:starting_temp+n_shells-3] = temp_part
     output[starting_lum-3:starting_lum+n_shells-4] = lum_part
+    return output
+
+def unstitch_vector(reduced_state_vector, starting_indices):
+    """
+        Given a reduced state vector, insert 0's in the appropriate places so that the dimension matches the state vector of the system
+        Input:
+            reduced_state_vector: 4(k-1) dimensional array where k is the number of mass shells
+            starting_indices: The starting index of each variable for the state vector, NOT the reduced_state_vector (use gen_starting_index to produce)
+        Output:
+            out_vec: 4k dimensional array, with 0's in appropriate places
+    """
+    dim = reduced_state_vector.shape[0]
+    assert(dim != 0)
+    assert(dim%4==0)
+    n_shells_minus_one = int(dim/4)
+    n_shells = n_shells_minus_one+1
+    output = np.zeros(4*n_shells)
+
+
+    starting_rad = starting_indices[StateVectorVar.RADIUS]
+    starting_p = starting_indices[StateVectorVar.PRESSURE]
+    starting_temp = starting_indices[StateVectorVar.TEMP]
+    starting_lum = starting_indices[StateVectorVar.LUMINOSITY]
+
+    # Include additional offset to account for the fact that starting_indices is for original index
+    starting_rad_reduced = starting_rad
+    starting_p_reduced = starting_p-1
+    starting_temp_reduced = starting_temp-2
+    starting_lum_reduced = starting_lum-3
+
+    rad_part = reduced_state_vector[starting_rad_reduced: starting_rad_reduced+n_shells_minus_one]
+    p_part = reduced_state_vector[starting_p_reduced: starting_p_reduced+n_shells_minus_one]
+    t_part = reduced_state_vector[starting_temp_reduced: starting_temp_reduced+n_shells_minus_one]
+    lum_part = reduced_state_vector[starting_lum_reduced: starting_lum_reduced+n_shells_minus_one]
+
+    output[starting_rad+1: starting_rad+1+n_shells_minus_one] = rad_part # Don't touch r0
+    output[starting_p: starting_p+n_shells_minus_one] = p_part # Don't touch p_{k-1}
+    output[starting_temp: starting_temp+n_shells_minus_one] = t_part # Don't touch T_{k-1}
+    output[starting_lum+1: starting_lum+1+n_shells_minus_one] = lum_part# Don't touch r0
+
     return output
