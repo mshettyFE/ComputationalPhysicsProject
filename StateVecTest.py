@@ -47,3 +47,15 @@ class TestStateVec:
         output = sv.interpolate(StateVectorVar.LUMINOSITY)
         expected = np.array([3.5, 10.5, 17.5])
         assert (output==expected).all()
+
+    def test_interp_all(self):
+        # Fake parameter list
+        dictionary = {"mu": 1}
+        sv = StateVector(4, True)
+        output = sv.interpolate_all(dictionary)
+        expected = np.array([[ 1,  3,  5],
+                        [ 1.5,  4.5,  7.5],
+                        [ 2.5,  7.5, 12.5],
+                        [ 3.5, 10.5, 17.5],
+                        [ 0.6,  0.6,  0.6]])
+        assert (output==expected).all()

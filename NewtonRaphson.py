@@ -1,7 +1,15 @@
 import numpy as np
 from Derivatives import gen_Jacobian
+from DifferenceEqs import calc_g
 from numpy.linalg import solve
-import Utilities
+from StateVector import StateVector
 
-def NewtonRaphson(n_shells,max_iters):
-    cur_state, state_indicies = Utilities.gen_state_vector(n_shells)
+def NewtonRaphson(parameters, n_shells,max_iters):
+    state = StateVector(n_shells, test_data=True) # For now, use test data
+    for i in range(max_iters):
+        Jac = gen_Jacobian(state,parameters)
+        residual = calc_g(state, parameters)
+        delta = solve(Jac,-residual) # Don't forget the negative sign!
+        print(state.state_vec.shape)
+        print(state.state_vec)
+        state.update_state(state.unstitch_vector(delta))

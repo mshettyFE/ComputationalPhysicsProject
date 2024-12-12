@@ -1,12 +1,22 @@
 import numpy as np
 import sys
-from enum import Enum
+from enum import Enum, auto
+from Utilities import equation_of_state
 
 class StateVectorVar(Enum):
+    RADIUS= 0
+    PRESSURE=1
+    TEMP=2
+    LUMINOSITY=3
+
+class InterpolationIndex(Enum):
     RADIUS=0
     PRESSURE=1
     TEMP=2
     LUMINOSITY=3
+    DENSITY=4
+
+
 
 class StateVector():
     def __init__(self, n_shells, test_data=False):
@@ -24,7 +34,7 @@ class StateVector():
             print("Make better guesses please")
             sys.exit(1)
         starting_indices = self.gen_starting_index()
-        self.state_vec, self.starting_indicies = output, starting_indices
+        self.state_vec, self.starting_indices = output, starting_indices
 
     def gen_starting_index(self):
         """
@@ -38,6 +48,10 @@ class StateVector():
         starting_indices[StateVectorVar.TEMP] = self.n_shells*2
         starting_indices[StateVectorVar.LUMINOSITY] = self.n_shells*3
         return starting_indices
+    
+    def update_state(self, vector):
+        assert(vector.shape==self.state_vec.shape)
+        self.state_vec = vector
 
     def stitch_vector(self):
         """
@@ -118,6 +132,23 @@ class StateVector():
             Output:
                 n-1 dimensional np array of interpolated variable
         """
-        first = self.state_vec[self.starting_indicies[which_var]:self.starting_indicies[which_var]+self.n_shells-1]
-        second = self.state_vec[self.starting_indicies[which_var]+1:self.starting_indicies[which_var]+self.n_shells]
+        first = self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells-1]
+        second = self.state_vec[self.starting_indices[which_var]+1:self.starting_indices[which_var]+self.n_shells]
         return (first+second)/2
+    
+    def interpolate_all(self, constants):
+        """
+            generate the interpolation for all variables, including density
+            Inputs:
+                constants: dictionary produced by Utilities.UnitScalingFactors
+            Output:
+                5x(k-1) dimensional array, where each column is the interpolation of that particular variable.
+                Indexed by InterpolationIndex
+        """
+        rad = self.interpolate(StateVectorVar.RADIUS)
+        pres = self.interpolate(StateVectorVar.PRESSURE)
+        temp = self.interpolate(StateVectorVar.TEMP)
+        lum = self.interpolate(StateVectorVar.LUMINOSITY)
+        density = equation_of_state(pres, temp, constants)
+        return np.vstack([rad, pres, temp, lum, density])
+        
