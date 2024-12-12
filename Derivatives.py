@@ -118,7 +118,7 @@ def Jac_block_33(state_vector,starting_indicies, n_shells):
     output  = output  = np.zeros((n_shells-1, n_shells-1))
     return output
 
-def gen_Jac(state_vector, starting_indices):
+def gen_Jacobian(state_vector, starting_indices):
     """
         Outputs the Jacobian of the residual function needed for Newton-Raphson
         Input:
