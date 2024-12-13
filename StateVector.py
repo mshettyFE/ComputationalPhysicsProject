@@ -28,18 +28,17 @@ class StateVector():
         """
         self.n_shells = n_shells
         if(test_data):
-            rad = 2*np.arange(n_shells)
-            pres = 3*np.arange(n_shells)
-            temp = 5*np.arange(n_shells)
-            lum = 7*np.arange(n_shells)
-            output = np.concatenate([rad, pres, temp, lum], axis=None)
+            output = np.zeros((4*n_shells))
+            output[0:n_shells] = 2*np.arange(n_shells)
+            output[n_shells:2*n_shells] = 3*np.arange(n_shells)
+            output[2*n_shells:3*n_shells] = 5*np.arange(n_shells)
+            output[3*n_shells:4*n_shells] = 7*np.arange(n_shells)
         else:
-            #TODO: Makes these guesses more realistic. For now, just panic
-            rad = np.linspace(0,1,n_shells)
-            pres = np.linspace(1,0,n_shells)
-            temp = np.linspace(1,0,n_shells)
-            lum = np.linspace(0,1,n_shells)
-            output = np.concatenate([rad, pres, temp, lum], axis=None)
+            output = np.zeros((4*n_shells))
+            output[0:n_shells] = np.linspace(0,1,n_shells)
+            output[n_shells:2*n_shells] = np.linspace(0,1,n_shells)
+            output[2*n_shells:3*n_shells] = np.linspace(0,1,n_shells)
+            output[3*n_shells:4*n_shells] = np.linspace(0,1,n_shells)
         starting_indices = self.gen_starting_index()
         self.state_vec, self.starting_indices = output, starting_indices
 

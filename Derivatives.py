@@ -296,33 +296,47 @@ def gen_Jacobian(state_vector: StateVector, constants):
     summed_vals = state_vector.summed_vars_all()
     dif_vals = state_vector.diff_vars_all()
     dm = 1/state_vector.n_shells
+    block_size =(state_vector.n_shells-1) 
+    out_dim = 4*block_size
+    output = np.zeros((out_dim, out_dim))
 
     J00 = Jac_block_rr(summed_vals, dif_vals, dm, constants)
     J01 = Jac_block_rp(summed_vals, dif_vals, dm, constants)
     J02 = Jac_block_rt(summed_vals, dif_vals, dm, constants)
     J03 = Jac_block_rl(summed_vals, dif_vals, dm, constants)
-    J0 = np.concatenate([J00, J01, J02, J03], axis=1)
 
     J10 = Jac_block_pr(summed_vals, dif_vals, dm, constants)
     J11 = Jac_block_pp(summed_vals, dif_vals, dm, constants)
     J12 = Jac_block_pt(summed_vals, dif_vals, dm, constants)
     J13 = Jac_block_pl(summed_vals, dif_vals, dm, constants)
-    J1 = np.concatenate([J10, J11, J12, J13], axis=1)
 
     J20 = Jac_block_tr(summed_vals, dif_vals, dm, constants)
     J21 = Jac_block_tp(summed_vals, dif_vals, dm, constants)
     J22 = Jac_block_tt(summed_vals, dif_vals, dm, constants)
     J23 = Jac_block_tl(summed_vals, dif_vals, dm, constants)
-    J2 = np.concatenate([J20, J21, J22, J23], axis=1)
 
     J30 = Jac_block_lr(summed_vals, dif_vals, dm, constants)
     J31 = Jac_block_lp(summed_vals, dif_vals, dm, constants)
     J32 = Jac_block_lt(summed_vals, dif_vals, dm, constants)
     J33 = Jac_block_ll(summed_vals, dif_vals, dm, constants)
-    J3 = np.concatenate([J30, J31, J32, J33], axis=1)
     
-    out = np.concatenate([J0,J1,J2,J3], axis=0)
-    return out
+    output[0:block_size,0:block_size] = J00
+    output[0:block_size, block_size:2*block_size] = J01
+    output[0:block_size, 2*block_size:3*block_size] = J02
+    output[0:block_size, 3*block_size:4*block_size] = J03
+    output[block_size:2*block_size,0:block_size] = J10
+    output[block_size:2*block_size, block_size:2*block_size] = J11
+    output[block_size:2*block_size, 2*block_size:3*block_size] = J12
+    output[block_size:2*block_size, 3*block_size:4*block_size] = J13
+    output[2*block_size:3*block_size,0:block_size] = J20
+    output[2*block_size:3*block_size, block_size:2*block_size] = J21
+    output[2*block_size:3*block_size, 2*block_size:3*block_size] = J22
+    output[2*block_size:3*block_size, 3*block_size:4*block_size] = J23
+    output[3*block_size:4*block_size,0:block_size] = J30
+    output[3*block_size:4*block_size, block_size:2*block_size] = J31
+    output[3*block_size:4*block_size, 2*block_size:3*block_size] = J32
+    output[3*block_size:4*block_size, 3*block_size:4*block_size] = J33
+    return output
 
 
 if __name__=="__main__":

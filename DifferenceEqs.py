@@ -41,8 +41,10 @@ def calc_g(state_vector: StateVector, parameters):
     interpolation = state_vector.interpolate_all(parameters)
     diffs = state_vector.diff_vars_all()
     dm = 1/state_vector.n_shells
-    gr = calc_gr(diffs,interpolation, dm)
-    gP = calc_gP(diffs,interpolation, dm)
-    gT = calc_gT(diffs,interpolation, dm, parameters["k0_prime"])
-    gL = calc_gL(diffs,interpolation, dm, parameters["E0_prime"])
-    return np.concatenate([gr,gP,gT, gL], axis=None)
+    block_size = state_vector.n_shells-1
+    output = np.zeros(4*block_size)
+    output[0:block_size] = calc_gr(diffs,interpolation, dm)
+    output[0:block_size] = calc_gP(diffs,interpolation, dm)
+    output[0:block_size] = calc_gT(diffs,interpolation, dm, parameters["k0_prime"])
+    output[0:block_size] = calc_gL(diffs,interpolation, dm, parameters["E0_prime"])
+    return output
