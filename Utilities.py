@@ -76,7 +76,7 @@ def generate_extra_parameters(M_0, R_0, E_0, kappa, mu):
 
 
     kp_prefactor = np.power(M_0,-2)*np.power(R_0,5)*np.power(T0,3.5)
-    scaled_stefan = StefanBoltz*(np.power(R_0,2),np.power(T0,4))/L0
+    scaled_stefan = StefanBoltz*(np.power(R_0,2)*np.power(T0,4))/L0
     kp_const_prefactor = (3/(16*scaled_stefan*np.power(4*np.pi,2) ))
     new_kp = kp_const_prefactor*kappa/kp_prefactor
 

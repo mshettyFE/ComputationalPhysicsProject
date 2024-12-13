@@ -26,16 +26,11 @@ import Utilities
 # -------------------------------------------------------------------
 
 
-
-# -------------------------------------------------------------------
-# NOTE: For now, just use random matrices so that I can work on the rest  of the pipeline (Can't invert 0 matrix!)
-# -------------------------------------------------------------------
-
 # Difference equation for radius
 # (r_{k+1}-r_{k})/(dm)- 1/(4*pi*r^{2}_{half}* \rho_{half})
 
 # Radius
-def Jac_block_00(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+def Jac_block_rr(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
     output_dim = state_vector_matrix_diff.shape[1]
     output = np.zeros((output_dim, output_dim))
     all_dp = state_vector_matrix_diff[StateVectorVar.PRESSURE.value]
@@ -43,10 +38,10 @@ def Jac_block_00(state_vector_matrix_sum, state_vector_matrix_diff, dm, constant
     density = Utilities.equation_of_state(all_dp, all_dt, constants)
     all_rad = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
 
-    alpha = -1/dm+(2/np.pi)*density/np.power(all_rad,3)
-    beta = 1/dm+(2/np.pi)*density/np.power(all_rad, 3)
+    alpha = -1/dm+(2/np.pi)*density/np.power(all_rad, 3) # r_k
+    beta = 1/dm+(2/np.pi)*density/np.power(all_rad,3) # r_{k+1}
     for shell in range(0,output_dim): # Run through all of the shells
-        if (shell == 0):
+        if (shell == 0): # r_0 doesn't change, so only include \delta r_{1} term
             output[0,0] = beta[0]
         else:
             output[shell, shell] = beta[shell]
@@ -54,99 +49,239 @@ def Jac_block_00(state_vector_matrix_sum, state_vector_matrix_diff, dm, constant
     return output
 
 # Pressure
-def Jac_block_01(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+def Jac_block_rp(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim, output_dim))
+
+    all_dt = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+    all_rad = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
+
+    alpha = (constants["mu"]/np.pi)/np.power(all_dt,1)/np.power(all_rad,2) # P_k
+    beta = -alpha # P_k+1
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == output_dim-1): # P_k-1 doesn't change, so only include \delta p_{k-2} term
+            output[output_dim-1,output_dim-1] = alpha[output_dim-1]
+        else:
+            output[shell, shell] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
+    return output
+
+# Temperature
+def Jac_block_rt(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
     output_dim = state_vector_matrix_diff.shape[1]
     output = np.zeros((output_dim, output_dim))
 
     all_dt = (state_vector_matrix_diff[StateVectorVar.TEMP.value])
+    all_dp = (state_vector_matrix_diff[StateVectorVar.PRESSURE.value])
     all_rad = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
 
-    alpha = (constants["mu"]/np.pi)/np.power(all_dt,1)/np.power(all_rad,2)
+    alpha = (-constants["mu"]/np.pi)*all_dp/np.power(all_dt,2)/np.power(all_rad,2) # T_k
+    beta = -alpha # T_k+1
+
     for shell in range(0,output_dim): # Run through all of the shells
-        if (shell == output_dim-1):
+        if (shell == output_dim-1): # T_k-1 doesn't change, so only include \delta T_{k-2} term
             output[output_dim-1,output_dim-1] = alpha[output_dim-1]
         else:
             output[shell, shell] = alpha[shell]
-            output[shell, shell+1] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
     return output
-
-# Temperature
-def Jac_block_02(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
-    return output
-
 # Luminosity
-def Jac_block_03(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_rl(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output = np.zeros((state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1]))
     return output
 
 # Difference equation for Pressure
 # (P_{k+1}-P_{k})/(dm) +  (dm/2)/(4*pi*r^{4}_{half})
 
 # Radius
-def Jac_block_10(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_pr(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
+    summed_r = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
+    val = (-8/np.pi) *dm /np.power(summed_r,5)
+
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == 0): # r_0 doesn't change, so only include \delta r_{1} term
+            output[0,0] = val[0]
+        else:
+            output[shell, shell] = val[shell]
+            output[shell, shell-1] = val[shell]
     return output
 
 # Pressure
-def Jac_block_11(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_pp(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
+    alpha = np.ones(output_dim)/dm
+    beta = -alpha
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == output_dim-1): # P_k-1 doesn't change, so only include \delta p_{k-2} term
+            output[output_dim-1,output_dim-1] = alpha[output_dim-1]
+        else:
+            output[shell, shell] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
     return output
 
 # Temperature
-def Jac_block_12(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_pt(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
     return output
 
 # Luminosity
-def Jac_block_13(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_pl(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
     return output
 
 # Difference equation for Temperature
 # (T_{k+1}-T_{k})/(dm)+ \kappa_0 \rho_{half}* L_{half}/r^{4}_{half}/T^{6.5}_{half}
 
 # Radius
-def Jac_block_20(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_tr(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    summed_r = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
+    summed_l = state_vector_matrix_sum[StateVectorVar.LUMINOSITY.value]
+    summed_t = state_vector_matrix_sum[StateVectorVar.TEMP.value]
+    dif_p = state_vector_matrix_diff[StateVectorVar.PRESSURE.value]
+    dif_t = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+    output = np.zeros((output_dim,output_dim))
+    prefactor = -np.power(2,11.5)*constants["k0_prime"]*constants["mu"]
+    val = prefactor*dif_p/dif_t*summed_l/np.power(summed_t, 6.5)/np.power(summed_r,5)
+    output = np.zeros((output_dim,output_dim))
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == 0): # r_0 doesn't change, so only include \delta r_{1} term
+            output[0,0] = val[0]
+        else:
+            output[shell, shell] = val[shell]
+            output[shell, shell-1] = val[shell]
     return output
 
 # Pressure
-def Jac_block_21(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_tp(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    summed_r = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
+    summed_t = state_vector_matrix_sum[StateVectorVar.TEMP.value]
+    dif_p = state_vector_matrix_diff[StateVectorVar.PRESSURE.value]
+    dif_t = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+    output = np.zeros((output_dim,output_dim))
+
+    prefactor = -np.power(2,9.5)*constants["k0_prime"]*constants["mu"]
+    alpha = prefactor*dif_p/dif_t/np.power(summed_t,6.5)/np.power(summed_r,4)
+    beta = -alpha
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == output_dim-1): # P_k-1 doesn't change, so only include \delta p_{k-2} term
+            output[output_dim-1,output_dim-1] = alpha[output_dim-1]
+        else:
+            output[shell, shell] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
     return output
 
 # Temperature
-def Jac_block_22(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_tt(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    summed_r = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
+    summed_l = state_vector_matrix_sum[StateVectorVar.LUMINOSITY.value]
+    summed_t = state_vector_matrix_sum[StateVectorVar.TEMP.value]
+    dif_p = state_vector_matrix_diff[StateVectorVar.PRESSURE.value]
+    dif_t = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+    og_t = (summed_t+dif_t)/2
+    output = np.zeros((output_dim,output_dim))
+
+    prefactor = np.power(2,9.5)*constants["k0_prime"]*constants["mu"]
+    alpha = -1/dm+prefactor*dif_p*summed_l/np.power(summed_r,4)*((2.5*og_t+5.5*dif_t)/np.power(dif_t,2)/np.power(summed_t,7.5))
+    beta = -alpha
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == output_dim-1): # t_k-1 doesn't change, so only include \delta t_{k-2} term
+            output[output_dim-1,output_dim-1] = alpha[output_dim-1]
+        else:
+            output[shell, shell] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
     return output
 
 # Luminosity
-def Jac_block_23(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_tl(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    summed_r = state_vector_matrix_sum[StateVectorVar.RADIUS.value]
+    summed_l = state_vector_matrix_sum[StateVectorVar.LUMINOSITY.value]
+    summed_t = state_vector_matrix_sum[StateVectorVar.TEMP.value]
+    dif_p = state_vector_matrix_diff[StateVectorVar.PRESSURE.value]
+    dif_t = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
+
+    prefactor = np.power(2,9.5)*constants["k0_prime"]*constants["mu"]
+
+    val = prefactor*dif_p/dif_t/np.power(summed_t,6.5)/np.power(summed_r,4)    
+
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == 0): # L_0 doesn't change, so only include \delta L_{1} term
+            output[0,0] = val[0]
+        else:
+            output[shell, shell] = val[shell]
+            output[shell, shell-1] = val[shell]
+
     return output
 
 # Difference equation for luminosity
 # (L_{k+1}-L_{k})/(dm)- \epsilon_0 \rho_{half}*T_{half}^{4}=g
 
 # Radius
-def Jac_block_30(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_lr(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
     return output
 
 # Pressure
-def Jac_block_31(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_lp(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
+    summed_t = state_vector_matrix_sum[StateVectorVar.TEMP.value]
+    dif_t = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+
+    prefactor = constants["E0_prime"]*constants["mu"]/np.power(2,4)
+    alpha = prefactor*np.power(summed_t, 4)/dif_t
+    beta = -alpha
+
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == output_dim-1): # P_k-1 doesn't change, so only include \delta p_{k-2} term
+            output[output_dim-1,output_dim-1] = alpha[output_dim-1]
+        else:
+            output[shell, shell] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
     return output
 
 # Temperature
-def Jac_block_32(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_lt(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
+    prefactor = constants["E0_prime"]*constants["mu"]/np.power(2,4)
+    summed_t = state_vector_matrix_sum[StateVectorVar.TEMP.value]
+    dif_p = state_vector_matrix_diff[StateVectorVar.PRESSURE.value]
+    dif_t = state_vector_matrix_diff[StateVectorVar.TEMP.value]
+
+    alpha = prefactor*dif_p*(summed_t+4*np.power(summed_t,3)*dif_t)/np.power(dif_t,2)
+    beta = -alpha
+
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == output_dim-1): # t_k-1 doesn't change, so only include \delta t_{k-2} term
+            output[output_dim-1,output_dim-1] = alpha[output_dim-1]
+        else:
+            output[shell, shell] = alpha[shell]
+            output[shell, shell+1] = beta[shell]
     return output
 
 # Luminosity
-def Jac_block_33(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
-    output = np.random.rand(state_vector_matrix_sum.shape[1],state_vector_matrix_sum.shape[1])
+def Jac_block_ll(state_vector_matrix_sum, state_vector_matrix_diff, dm, constants):
+    output_dim = state_vector_matrix_diff.shape[1]
+    output = np.zeros((output_dim,output_dim))
+    alpha = np.ones(output_dim)/dm
+    beta = -alpha
+    for shell in range(0,output_dim): # Run through all of the shells
+        if (shell == 0): # L_k-1 doesn't change, so only include \delta L_{k-2} term
+            output[0,0] = beta[0]
+        else:
+            output[shell, shell] = beta[shell]
+            output[shell, -shell] = alpha[shell]
     return output
 
 def gen_Jacobian(state_vector: StateVector, constants):
@@ -162,28 +297,28 @@ def gen_Jacobian(state_vector: StateVector, constants):
     dif_vals = state_vector.diff_vars_all()
     dm = 1/state_vector.n_shells
 
-    J00 = Jac_block_00(summed_vals, dif_vals, dm, constants)
-    J01 = Jac_block_01(summed_vals, dif_vals, dm, constants)
-    J02 = Jac_block_02(summed_vals, dif_vals, dm, constants)
-    J03 = Jac_block_03(summed_vals, dif_vals, dm, constants)
+    J00 = Jac_block_rr(summed_vals, dif_vals, dm, constants)
+    J01 = Jac_block_rp(summed_vals, dif_vals, dm, constants)
+    J02 = Jac_block_rt(summed_vals, dif_vals, dm, constants)
+    J03 = Jac_block_rl(summed_vals, dif_vals, dm, constants)
     J0 = np.concatenate([J00, J01, J02, J03], axis=1)
 
-    J10 = Jac_block_10(summed_vals, dif_vals, dm, constants)
-    J11 = Jac_block_11(summed_vals, dif_vals, dm, constants)
-    J12 = Jac_block_12(summed_vals, dif_vals, dm, constants)
-    J13 = Jac_block_13(summed_vals, dif_vals, dm, constants)
+    J10 = Jac_block_pr(summed_vals, dif_vals, dm, constants)
+    J11 = Jac_block_pp(summed_vals, dif_vals, dm, constants)
+    J12 = Jac_block_pt(summed_vals, dif_vals, dm, constants)
+    J13 = Jac_block_pl(summed_vals, dif_vals, dm, constants)
     J1 = np.concatenate([J10, J11, J12, J13], axis=1)
 
-    J20 = Jac_block_20(summed_vals, dif_vals, dm, constants)
-    J21 = Jac_block_21(summed_vals, dif_vals, dm, constants)
-    J22 = Jac_block_22(summed_vals, dif_vals, dm, constants)
-    J23 = Jac_block_23(summed_vals, dif_vals, dm, constants)
+    J20 = Jac_block_tr(summed_vals, dif_vals, dm, constants)
+    J21 = Jac_block_tp(summed_vals, dif_vals, dm, constants)
+    J22 = Jac_block_tt(summed_vals, dif_vals, dm, constants)
+    J23 = Jac_block_tl(summed_vals, dif_vals, dm, constants)
     J2 = np.concatenate([J20, J21, J22, J23], axis=1)
 
-    J30 = Jac_block_30(summed_vals, dif_vals, dm, constants)
-    J31 = Jac_block_31(summed_vals, dif_vals, dm, constants)
-    J32 = Jac_block_32(summed_vals, dif_vals, dm, constants)
-    J33 = Jac_block_33(summed_vals, dif_vals, dm, constants)
+    J30 = Jac_block_lr(summed_vals, dif_vals, dm, constants)
+    J31 = Jac_block_lp(summed_vals, dif_vals, dm, constants)
+    J32 = Jac_block_lt(summed_vals, dif_vals, dm, constants)
+    J33 = Jac_block_ll(summed_vals, dif_vals, dm, constants)
     J3 = np.concatenate([J30, J31, J32, J33], axis=1)
     
     out = np.concatenate([J0,J1,J2,J3], axis=0)
