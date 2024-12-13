@@ -10,6 +10,8 @@ def NewtonRaphson(parameters, n_shells,max_iters):
         Jac = gen_Jacobian(state,parameters)
         residual = calc_g(state, parameters)
         delta = solve(Jac,-residual) # Don't forget the negative sign!
-        print(state.state_vec.shape)
-        print(state.state_vec)
-        state.update_state(state.unstitch_vector(delta))
+        unstitched_delta = state.unstitch_vector(delta)
+        if(state.update_state(unstitched_delta)):
+            print("Update caused values to go negative")
+            break
+    return state.state_vec

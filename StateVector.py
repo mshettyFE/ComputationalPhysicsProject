@@ -51,7 +51,11 @@ class StateVector():
     
     def update_state(self, vector):
         assert(vector.shape==self.state_vec.shape)
-        self.state_vec = vector
+        temp = self.state_vec+vector
+        if(np.any(temp<0)):
+            return -1
+        self.state_vec = temp
+        return 0
 
     def stitch_vector(self):
         """
