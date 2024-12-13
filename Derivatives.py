@@ -25,22 +25,48 @@ from StateVector import StateVector, StateVectorVar
 # -------------------------------------------------------------------
 
 
-# Difference equation for radius
-# (r_{k+1}-r_{k})/(dm)- 1/(4*pi*r^{2}_{half}* \rho_{half})
 
 # -------------------------------------------------------------------
 # NOTE: For now, just use random matrices so that I can work on the rest  of the pipeline (Can't invert 0 matrix!)
 # -------------------------------------------------------------------
 
+# Difference equation for radius
+# (r_{k+1}-r_{k})/(dm)- 1/(4*pi*r^{2}_{half}* \rho_{half})
 
 # Radius
 def Jac_block_00(state_vector_matrix, dm, constants):
-    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
+    mu = constants["mu"]
+    output_dim = state_vector_matrix.shape[1]-1
+    output = np.zeros((output_dim, output_dim))
+    for shell in range(0,state_vector_matrix.shape[0]-1): # Run through all of the shells
+        dp = (state_vector_matrix[StateVectorVar.PRESSURE.value,shell+1]-state_vector_matrix[StateVectorVar.PRESSURE.value,shell])
+        dT = (state_vector_matrix[StateVectorVar.TEMP.value,shell+1]-state_vector_matrix[StateVectorVar.TEMP.value,shell])
+        density = mu*dp/dT
+        summed_rad = state_vector_matrix[StateVectorVar.RADIUS.value,shell+1]+state_vector_matrix[StateVectorVar.RADIUS.value,shell]
+        alpha = -1/dm+(2*mu/np.pi)*density/np.power(summed_rad,3)
+        beta = 1/dm+(2*mu/np.pi)*density/np.power(summed_rad, 3)
+        if (shell == 0):
+            output[0,0] = beta
+        else:
+            output[shell, shell] = beta
+            output[shell, shell-1] = alpha
     return output
 
 # Pressure
 def Jac_block_01(state_vector_matrix, dm, constants):
-    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
+    mu = constants["mu"]
+    output_dim = state_vector_matrix.shape[1]-1
+    output = np.zeros((output_dim, output_dim))
+    for shell in range(0,state_vector_matrix.shape[0]-1): # Run through all of the shells
+        dT = (state_vector_matrix[StateVectorVar.TEMP.value,shell+1]-state_vector_matrix[StateVectorVar.TEMP.value,shell])
+        summed_rad = state_vector_matrix[StateVectorVar.RADIUS.value,shell+1]+state_vector_matrix[StateVectorVar.RADIUS.value,shell]
+        alpha = (mu/np.pi)/np.power(dT,1)/np.power(summed_rad,2)
+        beta = alpha
+        if (shell == 0):
+            output[0,0] = beta
+        else:
+            output[shell, shell] = beta
+            output[shell, shell-1] = alpha
     return output
 
 # Temperature

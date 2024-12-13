@@ -8,4 +8,4 @@ if __name__ == "__main__":
         "E0_prime": 1,
         "k0_prime": 1
     }
-    NewtonRaphson.NewtonRaphson(params, 500,10)
+    NewtonRaphson.NewtonRaphson(params, 500,10, "REPLACEME.txt")

@@ -20,8 +20,14 @@ class InterpolationIndex(Enum):
 
 class StateVector():
     def __init__(self, n_shells, test_data=False):
-#        Assumes that state_vector has the following form:
-#        <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>, where k is the number of shells
+        """
+            Members:
+                state_vec: a 4*n_shells dimensional vector containing the values of each variable at each shell
+                    Assumes that state_vector has the following form:
+                    <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>, where k is the number of shells
+                n_shells: the number of shells used
+                starting_indicies: A dictionary housing at what index does each variable begin in the state vector
+        """
         self.n_shells = n_shells
         if(test_data):
             rad = 2*np.arange(n_shells)
@@ -136,13 +142,24 @@ class StateVector():
 
         return output
 
+    def extract_variable(self, which_var):
+        """
+            grab the specified variable array
+            Input:
+                which_var: StateVectorVar
+            Output:
+                n_shells dimensional np array of variable
+        """
+        return self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells]
+
+
     def interpolate(self, which_var):
         """
             generate average of adjacent elements in a vector
             Input:
                 which_var: StateVectorVar
             Output:
-                n-1 dimensional np array of interpolated variable
+                n_shells-1 dimensional np array of interpolated variable
         """
         first = self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells-1]
         second = self.state_vec[self.starting_indices[which_var]+1:self.starting_indices[which_var]+self.n_shells]
@@ -163,4 +180,13 @@ class StateVector():
         lum = self.interpolate(StateVectorVar.LUMINOSITY)
         density = equation_of_state(pres, temp, constants)
         return np.vstack([rad, pres, temp, lum, density])
-        
+    
+    def save_state(self, filename):
+        np.savetxt(filename, self.state_vec)
+
+    def load_state(self, filename):
+        cand_state = np.loadtxt(filename)
+        assert (cand_state.shape[0]%4 ==0)
+        self.n_shells = int(cand_state.shape[0]/4)
+        self.state_vec = cand_state
+        self.starting_indices = self.gen_starting_index()
