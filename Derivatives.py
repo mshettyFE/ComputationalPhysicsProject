@@ -1,5 +1,5 @@
 import numpy as np
-from StateVector import StateVector, InterpolationIndex
+from StateVector import StateVector, StateVectorVar
 
 # -------------------------------------------------------------------
 # NOTE: Don't forget that density(\rho) is a function of Pressure(P) and Temperature(T)
@@ -34,92 +34,92 @@ from StateVector import StateVector, InterpolationIndex
 
 
 # Radius
-def Jac_block_00(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_00(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Pressure
-def Jac_block_01(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_01(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Temperature
-def Jac_block_02(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_02(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Luminosity
-def Jac_block_03(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_03(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Difference equation for Pressure
 # (P_{k+1}-P_{k})/(dm) +  (dm/2)/(4*pi*r^{4}_{half})
 
 # Radius
-def Jac_block_10(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_10(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Pressure
-def Jac_block_11(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_11(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Temperature
-def Jac_block_12(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_12(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Luminosity
-def Jac_block_13(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_13(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Difference equation for Temperature
 # (T_{k+1}-T_{k})/(dm)+ \kappa_0 \rho_{half}* L_{half}/r^{4}_{half}/T^{6.5}_{half}
 
 # Radius
-def Jac_block_20(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_20(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Pressure
-def Jac_block_21(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_21(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Temperature
-def Jac_block_22(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_22(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Luminosity
-def Jac_block_23(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_23(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Difference equation for luminosity
 # (L_{k+1}-L_{k})/(dm)- \epsilon_0 \rho_{half}*T_{half}^{4}=g
 
 # Radius
-def Jac_block_30(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_30(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Pressure
-def Jac_block_31(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_31(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Temperature
-def Jac_block_32(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_32(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 # Luminosity
-def Jac_block_33(state_vector_matrix, interpolated, dm, constants):
-    output = np.random.rand(interpolated.shape[1],interpolated.shape[1])
+def Jac_block_33(state_vector_matrix, dm, constants):
+    output = np.random.rand(state_vector_matrix.shape[1]-1,state_vector_matrix.shape[1]-1)
     return output
 
 def gen_Jacobian(state_vector: StateVector, constants):
@@ -135,28 +135,28 @@ def gen_Jacobian(state_vector: StateVector, constants):
     dm = 1/state_vector.n_shells
     state_vector_matrix = state_vector.emit_state_matrix()
 
-    J00 = Jac_block_00(state_vector_matrix, interpolated_values, dm, constants)
-    J01 = Jac_block_01(state_vector_matrix, interpolated_values, dm, constants)
-    J02 = Jac_block_02(state_vector_matrix, interpolated_values, dm, constants)
-    J03 = Jac_block_03(state_vector_matrix, interpolated_values, dm, constants)
+    J00 = Jac_block_00(state_vector_matrix, dm, constants)
+    J01 = Jac_block_01(state_vector_matrix, dm, constants)
+    J02 = Jac_block_02(state_vector_matrix, dm, constants)
+    J03 = Jac_block_03(state_vector_matrix, dm, constants)
     J0 = np.concatenate([J00, J01, J02, J03], axis=1)
 
-    J10 = Jac_block_10(state_vector_matrix, interpolated_values, dm, constants)
-    J11 = Jac_block_11(state_vector_matrix, interpolated_values, dm, constants)
-    J12 = Jac_block_12(state_vector_matrix, interpolated_values, dm, constants)
-    J13 = Jac_block_13(state_vector_matrix, interpolated_values, dm, constants)
+    J10 = Jac_block_10(state_vector_matrix, dm, constants)
+    J11 = Jac_block_11(state_vector_matrix, dm, constants)
+    J12 = Jac_block_12(state_vector_matrix, dm, constants)
+    J13 = Jac_block_13(state_vector_matrix, dm, constants)
     J1 = np.concatenate([J10, J11, J12, J13], axis=1)
 
-    J20 = Jac_block_20(state_vector_matrix, interpolated_values, dm, constants)
-    J21 = Jac_block_21(state_vector_matrix, interpolated_values, dm, constants)
-    J22 = Jac_block_22(state_vector_matrix, interpolated_values, dm, constants)
-    J23 = Jac_block_23(state_vector_matrix, interpolated_values, dm, constants)
+    J20 = Jac_block_20(state_vector_matrix, dm, constants)
+    J21 = Jac_block_21(state_vector_matrix, dm, constants)
+    J22 = Jac_block_22(state_vector_matrix, dm, constants)
+    J23 = Jac_block_23(state_vector_matrix, dm, constants)
     J2 = np.concatenate([J20, J21, J22, J23], axis=1)
 
-    J30 = Jac_block_30(state_vector_matrix, interpolated_values, dm, constants)
-    J31 = Jac_block_31(state_vector_matrix, interpolated_values, dm, constants)
-    J32 = Jac_block_32(state_vector_matrix, interpolated_values, dm, constants)
-    J33 = Jac_block_33(state_vector_matrix, interpolated_values, dm, constants)
+    J30 = Jac_block_30(state_vector_matrix, dm, constants)
+    J31 = Jac_block_31(state_vector_matrix, dm, constants)
+    J32 = Jac_block_32(state_vector_matrix, dm, constants)
+    J33 = Jac_block_33(state_vector_matrix, dm, constants)
     J3 = np.concatenate([J30, J31, J32, J33], axis=1)
     
     out = np.concatenate([J0,J1,J2,J3], axis=0)
