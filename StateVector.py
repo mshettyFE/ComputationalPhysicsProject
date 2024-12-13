@@ -49,6 +49,14 @@ class StateVector():
         starting_indices[StateVectorVar.LUMINOSITY] = self.n_shells*3
         return starting_indices
     
+    def emit_state_matrix(self):
+        """
+            Recast self.state_vec into a 4xn_shells dimensional matrix.
+            Emit this matrix, leaving self.state_vec unchanged
+        """
+        recasted_shape = (4,self.n_shells)
+        return self.state_vec.reshape(recasted_shape)
+    
     def update_state(self, vector):
         assert(vector.shape==self.state_vec.shape)
         temp = self.state_vec+vector

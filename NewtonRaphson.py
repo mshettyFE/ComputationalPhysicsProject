@@ -6,6 +6,7 @@ from StateVector import StateVector
 
 def NewtonRaphson(parameters, n_shells,max_iters):
     state = StateVector(n_shells, test_data=True) # For now, use test data
+    print(state.emit_state_matrix().shape)
     for i in range(max_iters):
         Jac = gen_Jacobian(state,parameters)
         residual = calc_g(state, parameters)
