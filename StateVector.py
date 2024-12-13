@@ -35,8 +35,11 @@ class StateVector():
             output = np.concatenate([rad, pres, temp, lum], axis=None)
         else:
             #TODO: Makes these guesses more realistic. For now, just panic
-            print("Make better guesses please")
-            sys.exit(1)
+            rad = np.linspace(0,1,n_shells)
+            pres = np.linspace(1,0,n_shells)
+            temp = np.linspace(1,0,n_shells)
+            lum = np.linspace(0,1,n_shells)
+            output = np.concatenate([rad, pres, temp, lum], axis=None)
         starting_indices = self.gen_starting_index()
         self.state_vec, self.starting_indices = output, starting_indices
 

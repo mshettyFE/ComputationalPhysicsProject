@@ -5,16 +5,14 @@ from numpy.linalg import solve
 from StateVector import StateVector
 
 def NewtonRaphson(parameters, n_shells,max_iters, output_fname):
-    state = StateVector(n_shells, test_data=True) # For now, use test data
+    state = StateVector(n_shells)
     for i in range(max_iters):
         print(i)
         Jac = gen_Jacobian(state,parameters)
         residual = calc_g(state, parameters)
-        delta = -np.matmul( np.linalg.inv(Jac),residual)
-        print(np.linalg.inv(Jac))
-        print(residual)
-#        delta = solve(Jac,-residual) # Don't forget the negative sign!
+        delta = solve(Jac,-residual)
         unstitched_delta = state.unstitch_vector(delta)
+        print(unstitched_delta.max())
         
         if(state.update_state(unstitched_delta)):
             print("Update caused values to go negative")
