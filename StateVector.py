@@ -10,13 +10,11 @@ class StateVectorVar(Enum):
     LUMINOSITY=3
 
 class InterpolationIndex(Enum):
-    RADIUS=0
+    RADIUS= 0
     PRESSURE=1
     TEMP=2
     LUMINOSITY=3
     DENSITY=4
-
-
 
 class StateVector():
     def __init__(self, n_shells, test_data=False):
@@ -54,15 +52,7 @@ class StateVector():
         starting_indices[StateVectorVar.TEMP] = self.n_shells*2
         starting_indices[StateVectorVar.LUMINOSITY] = self.n_shells*3
         return starting_indices
-    
-    def emit_state_matrix(self):
-        """
-            Recast self.state_vec into a 4xn_shells dimensional matrix.
-            Emit this matrix, leaving self.state_vec unchanged
-        """
-        recasted_shape = (4,self.n_shells)
-        return self.state_vec.reshape(recasted_shape)
-    
+        
     def update_state(self, vector):
         assert(vector.shape==self.state_vec.shape)
         temp = self.state_vec+vector
@@ -152,35 +142,69 @@ class StateVector():
         """
         return self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells]
 
-
-    def interpolate(self, which_var):
+    def summed_vars(self, which_var):
         """
-            generate average of adjacent elements in a vector
-            Input:
+            generate the sum of adjacent shells for a particular variable
+            Inputs:
                 which_var: StateVectorVar
             Output:
-                n_shells-1 dimensional np array of interpolated variable
+                (k-1) dimensional array, where each element is the sum of adjacent elements of particular variable.        
         """
         first = self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells-1]
         second = self.state_vec[self.starting_indices[which_var]+1:self.starting_indices[which_var]+self.n_shells]
-        return (first+second)/2
+        return (first+second)
+
+    def dif_vars(self, which_var):
+        """
+            generate the sum of adjacent shells for a particular variable
+            Inputs:
+                which_var: StateVectorVar
+            Output:
+                (k-1) dimensional array, where each element is the sum of adjacent elements of particular variable.        
+        """
+        first = self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells-1]
+        second = self.state_vec[self.starting_indices[which_var]+1:self.starting_indices[which_var]+self.n_shells]
+        return (second-first)
     
+    def summed_vars_all(self):
+        """
+            generate the sum for all variables
+            Output:
+                4x(k-1) dimensional array, where each column is the interpolation of that particular variable.
+        """
+        rad = self.summed_vars(StateVectorVar.RADIUS)
+        pres = self.summed_vars(StateVectorVar.PRESSURE)
+        temp = self.summed_vars(StateVectorVar.TEMP)
+        lum = self.summed_vars(StateVectorVar.LUMINOSITY)
+        return np.vstack([rad, pres, temp, lum])
+
     def interpolate_all(self, constants):
         """
-            generate the interpolation for all variables, including density
+            generate the sum for all variables
             Inputs:
-                constants: dictionary produced by Utilities.UnitScalingFactors
+                constants: dictionary produced by Utilities.generate_extra_parameters()
             Output:
                 5x(k-1) dimensional array, where each column is the interpolation of that particular variable.
-                Indexed by InterpolationIndex
         """
-        rad = self.interpolate(StateVectorVar.RADIUS)
-        pres = self.interpolate(StateVectorVar.PRESSURE)
-        temp = self.interpolate(StateVectorVar.TEMP)
-        lum = self.interpolate(StateVectorVar.LUMINOSITY)
+        rad = self.summed_vars(StateVectorVar.RADIUS)/2
+        pres = self.summed_vars(StateVectorVar.PRESSURE)/2
+        temp = self.summed_vars(StateVectorVar.TEMP)/2
+        lum = self.summed_vars(StateVectorVar.LUMINOSITY)/2
         density = equation_of_state(pres, temp, constants)
         return np.vstack([rad, pres, temp, lum, density])
-    
+
+    def diff_vars_all(self):
+        """
+            generate the difference for all variables
+            Output:
+                4x(k-1) dimensional array, where each column is the interpolation of that particular variable.
+        """
+        rad = self.dif_vars(StateVectorVar.RADIUS)
+        pres = self.dif_vars(StateVectorVar.PRESSURE)
+        temp = self.dif_vars(StateVectorVar.TEMP)
+        lum = self.dif_vars(StateVectorVar.LUMINOSITY)
+        return np.vstack([rad, pres, temp, lum])
+
     def save_state(self, filename):
         np.savetxt(filename, self.state_vec)
 

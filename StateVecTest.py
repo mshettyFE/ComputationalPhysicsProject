@@ -30,32 +30,70 @@ class TestStateVec:
         expected = np.array([0, 1,  2,  3,  4,  5,  6, 0, 8,  9, 10,0,0 ,13, 14, 15], dtype=np.float64)
         assert (output==expected).all()
 
-    def test_interp(self):
+    def test_sum(self):
         sv = StateVector(4, True)
-        output = sv.interpolate(StateVectorVar.RADIUS)
-        expected = np.array([1,3,5])
+        output = sv.summed_vars(StateVectorVar.RADIUS)
+        expected = 2*np.array([1,3,5])
         assert (output==expected).all()
 
-        output = sv.interpolate(StateVectorVar.PRESSURE)
-        expected = np.array([1.5, 4.5, 7.5])
+        output = sv.summed_vars(StateVectorVar.PRESSURE)
+        expected = 2*np.array([1.5, 4.5, 7.5])
         assert (output==expected).all()
 
-        output = sv.interpolate(StateVectorVar.TEMP)
-        expected = np.array([2.5,  7.5, 12.5])
+        output = sv.summed_vars(StateVectorVar.TEMP)
+        expected = 2*np.array([2.5,  7.5, 12.5])
         assert (output==expected).all()
 
-        output = sv.interpolate(StateVectorVar.LUMINOSITY)
-        expected = np.array([3.5, 10.5, 17.5])
+        output = sv.summed_vars(StateVectorVar.LUMINOSITY)
+        expected = 2*np.array([3.5, 10.5, 17.5])
+        assert (output==expected).all()
+
+    def test_sum_all(self):
+        # Fake parameter list
+        sv = StateVector(4, True)
+        output = sv.summed_vars_all()
+        expected = 2*np.array([[ 1,  3,  5],
+                        [ 1.5,  4.5,  7.5],
+                        [ 2.5,  7.5, 12.5],
+                        [ 3.5, 10.5, 17.5]])
+        assert (output==expected).all()
+
+    def test_diff(self):
+        sv = StateVector(4, True)
+        output = sv.dif_vars(StateVectorVar.RADIUS)
+        expected = np.array([2,2,2])
+        assert (output==expected).all()
+
+        output = sv.dif_vars(StateVectorVar.PRESSURE)
+        expected = np.array([3, 3, 3])
+        assert (output==expected).all()
+
+        output = sv.dif_vars(StateVectorVar.TEMP)
+        expected = np.array([5,  5, 5])
+        assert (output==expected).all()
+
+        output = sv.dif_vars(StateVectorVar.LUMINOSITY)
+        expected = np.array([7, 7, 7])
+        assert (output==expected).all()
+
+    def test_diff_all(self):
+        # Fake parameter list
+        sv = StateVector(4, True)
+        output = sv.diff_vars_all()
+        expected = np.array([[ 2,  2,  2],
+                        [ 3,  3,  3],
+                        [ 5,  5, 5],
+                        [ 7, 7, 7]])
         assert (output==expected).all()
 
     def test_interp_all(self):
         # Fake parameter list
-        dictionary = {"mu": 1}
+        constants = {"mu": 1}
         sv = StateVector(4, True)
-        output = sv.interpolate_all(dictionary)
+        output = sv.interpolate_all(constants)
         expected = np.array([[ 1,  3,  5],
                         [ 1.5,  4.5,  7.5],
                         [ 2.5,  7.5, 12.5],
                         [ 3.5, 10.5, 17.5],
-                        [ 0.6,  0.6,  0.6]])
+                        [0.6,0.6,0.6]])
         assert (output==expected).all()
