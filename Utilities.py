@@ -11,7 +11,7 @@ m_p = np.float64(1.67262192E-27) # kg
 M_sun = 1.989E30 # kg
 R_sun  = 6.9634E8 # m
 mu_sun = np.float64(0.6)
-E_0_sun = 1.8E-26 # m^5/(kg s^3*K^4)
+E_0_sun = 1.8E-29 # m^5/(kg s^3*K^4)
 kappa_0_sun = 3E-2 # m^2/kg
 
 class ScaleIndex(Enum):
@@ -100,6 +100,12 @@ def equation_of_state(p_state,t_state, extra_const_params):
             array of densities. same size as p_state
     """
     return (p_state*extra_const_params["mu"])/t_state
+
+def equation_of_state_dp(p_state,t_state, extra_const_params):
+    return (-extra_const_params["mu"])/t_state
+
+def equation_of_state_dt(p_state,t_state, extra_const_params):
+    return (-p_state*extra_const_params["mu"])/np.power(t_state,2)
 
 def nuclear_energy(rho_prime, T_prime, extra_const_params):
     """
