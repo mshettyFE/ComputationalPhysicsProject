@@ -47,9 +47,13 @@ class StateVector():
         elif (data_gen_type==DataGenMode.RANDOM):
             output = jnp.zeros((4*n_shells))
             output = output.at[0:n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[0].set(0) # r_0 = 0
             output = output.at[n_shells:2*n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[2*n_shells-1].set(0) # P_k-2 = 0
             output = output.at[2*n_shells:3*n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[3*n_shells-1].set(0) # T_k-2 = 0
             output = output.at[3*n_shells:4*n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[3*n_shells].set(0) # L_0 = 0
         elif (data_gen_type==DataGenMode.LINEAR):
             output = output.at[0:n_shells].add(jnp.linspace(0,1,n_shells))
             output = output.at[n_shells:2*n_shells].add(jnp.linspace(0,1,n_shells))
@@ -77,10 +81,10 @@ class StateVector():
     def update_state(self, delta):
         assert(delta.shape==self.state_vec.shape)
         temp = self.state_vec+delta
-#        if(jnp.any(temp<0)):
-#            return -1
+        if(jnp.any(temp<0)):
+            return 0
         self.state_vec = temp
-        return 0
+        return 1
 
 
 

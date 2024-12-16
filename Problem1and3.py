@@ -10,4 +10,6 @@ if __name__ == "__main__":
     print(params)
     scales = Utilities.UnitScalingFactors(mass, rad)
     print(scales)
-    NewtonRaphson.NewtonRaphsonWrapper(params)
+    state, err, initial = NewtonRaphson.NewtonRaphsonWrapper(params,100, 100, 1E3)
+    state.save_state("REPLACEME.npy")
+    jnp.save("InitialConds.npy",initial)
