@@ -1,4 +1,6 @@
 import jax.numpy as jnp
+import numpy as np
+import sys
 from enum import Enum
 from Utilities import equation_of_state
 
@@ -18,8 +20,13 @@ class InterpolationIndex(Enum):
     DENSITY=4
     MASS=5
 
+class DataGenMode(Enum):
+    TEST=0
+    RANDOM=1
+    LINEAR=2   
+
 class StateVector():
-    def __init__(self, n_shells, test_data=False):
+    def __init__(self, n_shells, data_gen_type:DataGenMode):
         """
             Members:
                 state_vec: a 4*n_shells dimensional vector containing the values of each variable at each shell
@@ -31,18 +38,26 @@ class StateVector():
         """
         self.n_shells = n_shells
         self.dm = 1/self.n_shells
-        if(test_data):
+        if(data_gen_type==DataGenMode.TEST):
             output = jnp.zeros((4*n_shells))
             output =output.at[0:n_shells].add(2*jnp.arange(n_shells))
             output =output.at[n_shells:2*n_shells].add(3*jnp.arange(n_shells))
             output =output.at[2*n_shells:3*n_shells].add(5*jnp.arange(n_shells))
             output =output.at[3*n_shells:4*n_shells].add(7*jnp.arange(n_shells))
-        else:
+        elif (data_gen_type==DataGenMode.RANDOM):
             output = jnp.zeros((4*n_shells))
+            output = output.at[0:n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[n_shells:2*n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[2*n_shells:3*n_shells].add(jnp.array(np.random.rand(n_shells)))
+            output = output.at[3*n_shells:4*n_shells].add(jnp.array(np.random.rand(n_shells)))
+        elif (data_gen_type==DataGenMode.LINEAR):
             output = output.at[0:n_shells].add(jnp.linspace(0,1,n_shells))
             output = output.at[n_shells:2*n_shells].add(jnp.linspace(0,1,n_shells))
             output = output.at[2*n_shells:3*n_shells].add(jnp.linspace(0,1,n_shells))
             output = output.at[3*n_shells:4*n_shells].add(jnp.linspace(0,1,n_shells))
+        else:
+            print("Undefined data generation mode")
+            sys.exit(1)
         starting_indices = self.gen_starting_index()
         self.state_vec, self.starting_indices = output, starting_indices
 

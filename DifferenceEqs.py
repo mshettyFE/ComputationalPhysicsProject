@@ -37,23 +37,24 @@ def calc_jax_g(state_vector, indicies, n_shells, dm, constants):
     density = Utilities.equation_of_state(interp_pres, interp_temp, constants)
     shell_masses = dm*jnp.arange(n_shells)
     masses = 0.5*(shell_masses[0:n_shells-1]+shell_masses[1:n_shells])
-
     output = jnp.zeros(4*n_shells)
-    radial = dif_rad*2/dm-1/(4*jnp.pi)/jnp.power(interp_rad,2)/density
-    output = output.at[starting_rad_index+1:starting_rad_index+n_shells].add(radial)
-# Difference equation for Pressure
-# (P_{k+1}-P_{k})/(dm) +  (m_{half}/2)/(4*pi*r^{4}_{half})
-    pressure=  dif_pres/dm+masses/2/(4*jnp.pi*jnp.power(interp_rad,4))
-    output = output.at[starting_pres_index:starting_pres_index+n_shells-1].add(pressure)
 
+# Difference equation for radius
+# (r_{k+1}-r_{k})/(dm)- 1/(4*pi*r^{2}_{half}* \rho_{half})
+    radial = dif_rad/dm-1/(4*jnp.pi)/jnp.power(interp_rad,2)/density
+    output = output.at[starting_rad_index+1:starting_rad_index+n_shells].add(radial) # ignore r_0 term
+# Difference equation for Pressure
+# (P_{k+1}-P_{k})/(dm) +  (m_{half})/(4*pi*r^{4}_{half})
+    pressure=  dif_pres/dm+masses/(4*jnp.pi*jnp.power(interp_rad,4))
+    output = output.at[starting_pres_index:starting_pres_index+n_shells-1].add(pressure)# ignore P_k-1 term
 
 # Difference equation for Temperature
 # (T_{k+1}-T_{k})/(dm)+ \kappa_0 \rho_{half}* L_{half}/r^{4}_{half}/T^{6.5}_{half}
-    temperature = dif_temp*2/dm+constants["k0_prime"]*density*interp_lum/jnp.power(interp_rad,4)/jnp.power(interp_temp,6.5)
-    output = output.at[starting_temp_index:starting_temp_index+n_shells-1].add(temperature)
+    temperature = dif_temp/dm+constants["k0_prime"]*density*interp_lum/jnp.power(interp_rad,4)/jnp.power(interp_temp,6.5)
+    output = output.at[starting_temp_index:starting_temp_index+n_shells-1].add(temperature)# ignore T_k-1 term
 
 # Difference equation for luminosity
 # (L_{k+1}-L_{k})/(dm)- \epsilon_0 \rho_{half}*T_{half}^{4}
-    lum = dif_lum/dm-constants["E0_prime"]*density*jnp.power(interp_temp,4)
+    lum = dif_lum/dm-constants["E0_prime"]*density*jnp.power(interp_temp,4) # ignore L_0 term
     output = output.at[starting_lum_index+1:starting_lum_index+n_shells].add(lum)
     return output
