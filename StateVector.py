@@ -23,7 +23,8 @@ class InterpolationIndex(Enum):
 class DataGenMode(Enum):
     TEST=0
     RANDOM=1
-    LINEAR=2   
+    LINEAR=2
+    LOG=3   
 
 class StateVector():
     def __init__(self, n_shells, data_gen_type:DataGenMode):
@@ -38,27 +39,52 @@ class StateVector():
         """
         self.n_shells = n_shells
         self.dm = 1/self.n_shells
+        self.data_gen_mode = data_gen_type
         if(data_gen_type==DataGenMode.TEST):
+            # Dummy data to see of can run end to end
             output = jnp.zeros((4*n_shells))
             output =output.at[0:n_shells].add(2*jnp.arange(n_shells))
             output =output.at[n_shells:2*n_shells].add(3*jnp.arange(n_shells))
             output =output.at[2*n_shells:3*n_shells].add(5*jnp.arange(n_shells))
             output =output.at[3*n_shells:4*n_shells].add(7*jnp.arange(n_shells))
         elif (data_gen_type==DataGenMode.RANDOM):
+            # Fill all variables with random uniform noise.
             output = jnp.zeros((4*n_shells))
             output = output.at[0:n_shells].add(jnp.array(np.random.rand(n_shells)))
-            output = output.at[0].set(0) # r_0 = 0
             output = output.at[n_shells:2*n_shells].add(jnp.array(np.random.rand(n_shells)))
-            output = output.at[2*n_shells-1].set(0) # P_k-2 = 0
             output = output.at[2*n_shells:3*n_shells].add(jnp.array(np.random.rand(n_shells)))
-            output = output.at[3*n_shells-1].set(0) # T_k-2 = 0
             output = output.at[3*n_shells:4*n_shells].add(jnp.array(np.random.rand(n_shells)))
+            # Apply boundary conditions to state vector
+            output = output.at[0].set(0) # r_0 = 0
+            output = output.at[2*n_shells-1].set(0) # P_k-2 = 0
+            output = output.at[3*n_shells-1].set(0) # T_k-2 = 0
             output = output.at[3*n_shells].set(0) # L_0 = 0
         elif (data_gen_type==DataGenMode.LINEAR):
-            output = output.at[0:n_shells].add(jnp.linspace(0,1,n_shells))
-            output = output.at[n_shells:2*n_shells].add(jnp.linspace(0,1,n_shells))
-            output = output.at[2*n_shells:3*n_shells].add(jnp.linspace(0,1,n_shells))
-            output = output.at[3*n_shells:4*n_shells].add(jnp.linspace(0,1,n_shells))
+            # Assumes that each variable follows a linear slope, increasing or decreasing as appropriate
+            output = jnp.zeros((4*n_shells))
+            linear = jnp.linspace(0,1,n_shells)
+            rev_linear = jnp.flip(linear)
+            output = output.at[0:n_shells].add(linear)
+            output = output.at[n_shells:2*n_shells].add(rev_linear)
+            output = output.at[2*n_shells:3*n_shells].add(rev_linear)
+            output = output.at[3*n_shells:4*n_shells].add(linear)
+            # Apply boundary conditions to state vector
+            output = output.at[0].set(0) # r_0 = 0
+            output = output.at[2*n_shells-1].set(0) # P_k-2 = 0
+            output = output.at[3*n_shells-1].set(0) # T_k-2 = 0
+            output = output.at[3*n_shells].set(0) # L_0 = 0
+        elif (data_gen_type==DataGenMode.LOG):
+            # Assumes that each variable follows a linear slope, increasing or decreasing as appropriate
+            # Added twist is to cast everything to log variables
+            output = jnp.zeros((4*n_shells))
+            linear = jnp.linspace(1E-9,1,n_shells) # lower bound to take into account that log(0) is undefined
+            rev_linear = jnp.flip(linear)
+            log = jnp.log(linear)
+            rev_log = jnp.log(rev_linear)
+            output = output.at[0:n_shells].add(log)
+            output = output.at[n_shells:2*n_shells].add(rev_log)
+            output = output.at[2*n_shells:3*n_shells].add(rev_log)
+            output = output.at[3*n_shells:4*n_shells].add(log)
         else:
             print("Undefined data generation mode")
             sys.exit(1)
@@ -78,10 +104,10 @@ class StateVector():
         starting_indices[StateVectorVar.LUMINOSITY] = self.n_shells*3
         return starting_indices
         
-    def update_state(self, delta):
+    def update_state(self, delta, check_neg = True):
         assert(delta.shape==self.state_vec.shape)
         temp = self.state_vec+delta
-        if(jnp.any(temp<0)):
+        if(jnp.any(temp<0) and check_neg):
             return 0
         self.state_vec = temp
         return 1
