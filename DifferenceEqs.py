@@ -1,50 +1,59 @@
-import numpy as np
+import jax.numpy as jnp
 from StateVector import InterpolationIndex, StateVector, StateVectorVar
+import Utilities
 
 # dm = m_{k+1}-m_{k}
 
-# Difference equation for radius
-# (r_{k+1}-r_{k})/(dm)- 1/(4*pi*r^{2}_{half}* \rho_{half})
-def calc_gr(differences, interpolation, dm):
-    rad = differences[StateVectorVar.RADIUS.value,:]
-    interp_rad =  interpolation[InterpolationIndex.RADIUS.value,:]
-    density = interpolation[InterpolationIndex.DENSITY.value,:]
-    return rad*2/dm-1/(4*np.pi)/np.power(interp_rad,2)/density
+def calc_jax_g(state_vector, indicies, n_shells, dm, constants):
 
+    starting_rad_index = indicies[StateVectorVar.RADIUS]
+    r_k = state_vector[starting_rad_index:starting_rad_index+n_shells-1]
+    r_k_1 = state_vector[starting_rad_index+1:starting_rad_index+n_shells]
+
+    starting_pres_index = indicies[StateVectorVar.PRESSURE]
+    p_k = state_vector[starting_pres_index:starting_pres_index+n_shells-1]
+    p_k_1 = state_vector[starting_pres_index+1:starting_pres_index+n_shells]
+
+    starting_temp_index = indicies[StateVectorVar.TEMP]
+    t_k = state_vector[starting_temp_index:starting_temp_index+n_shells-1]
+    t_k_1 = state_vector[starting_temp_index+1:starting_temp_index+n_shells]
+
+    starting_lum_index = indicies[StateVectorVar.LUMINOSITY]
+    l_k = state_vector[starting_lum_index:starting_lum_index+n_shells-1]
+    l_k_1 = state_vector[starting_lum_index+1:starting_lum_index+n_shells]
+
+    interp_rad = (r_k+r_k_1)/2
+    dif_rad = (r_k_1-r_k)
+
+    interp_pres = (p_k+p_k_1)/2
+    dif_pres = (p_k_1-p_k)
+
+    interp_temp = (t_k+t_k_1)/2
+    dif_temp = (t_k_1-t_k)
+
+    interp_lum = (l_k+l_k_1)/2
+    dif_lum = (l_k_1-l_k)
+
+    density = Utilities.equation_of_state(interp_pres, interp_temp, constants)
+    shell_masses = dm*jnp.arange(n_shells)
+    masses = 0.5*(shell_masses[0:n_shells-1]+shell_masses[1:n_shells])
+
+    output = jnp.zeros(4*n_shells)
+    radial = dif_rad*2/dm-1/(4*jnp.pi)/jnp.power(interp_rad,2)/density
+    output = output.at[starting_rad_index+1:starting_rad_index+n_shells].add(radial)
 # Difference equation for Pressure
 # (P_{k+1}-P_{k})/(dm) +  (m_{half}/2)/(4*pi*r^{4}_{half})
-def calc_gP(differences,interpolation, dm):
-    pres = differences[StateVectorVar.PRESSURE.value, :]
-    rad = interpolation[InterpolationIndex.RADIUS.value,:]
-    masses = interpolation[InterpolationIndex.MASS.value,:]
-    return pres/dm+masses/2/(4*np.pi*np.power(rad,4))
+    pressure=  dif_pres/dm+masses/2/(4*jnp.pi*jnp.power(interp_rad,4))
+    output = output.at[starting_pres_index:starting_pres_index+n_shells-1].add(pressure)
+
 
 # Difference equation for Temperature
 # (T_{k+1}-T_{k})/(dm)+ \kappa_0 \rho_{half}* L_{half}/r^{4}_{half}/T^{6.5}_{half}
-def calc_gT(differences , interpolation, dm, kappa):
-    temp = differences[StateVectorVar.TEMP.value, :]
-    interp_temp = interpolation[InterpolationIndex.TEMP.value,:] 
-    density =  interpolation[InterpolationIndex.DENSITY.value,:]
-    lum = interpolation[InterpolationIndex.LUMINOSITY.value, :]
-    rad = interpolation[InterpolationIndex.RADIUS.value,:]
-    return temp*2/dm+kappa*density*lum/np.power(rad,4)/np.power(interp_temp,6.5)
+    temperature = dif_temp*2/dm+constants["k0_prime"]*density*interp_lum/jnp.power(interp_rad,4)/jnp.power(interp_temp,6.5)
+    output = output.at[starting_temp_index:starting_temp_index+n_shells-1].add(temperature)
 
 # Difference equation for luminosity
 # (L_{k+1}-L_{k})/(dm)- \epsilon_0 \rho_{half}*T_{half}^{4}
-def calc_gL(differences, interpolation, dm, epsilon):
-    temp = interpolation[InterpolationIndex.TEMP.value, :]
-    density =  interpolation[InterpolationIndex.DENSITY.value,:]
-    lum = differences[StateVectorVar.LUMINOSITY.value, :]
-    return lum/dm-epsilon*density*np.power(temp,4)    
-
-def calc_g(state_vector: StateVector, parameters):
-    interpolation = state_vector.interpolate_all(parameters)
-    diffs = state_vector.diff_vars_all()
-    dm = 1/state_vector.n_shells
-    block_size = state_vector.n_shells-1
-    output = np.zeros(4*block_size)
-    output[0:block_size] = calc_gr(diffs,interpolation, dm)
-    output[block_size:2*block_size] = calc_gP(diffs,interpolation, dm)
-    output[2*block_size:3*block_size] = calc_gT(diffs,interpolation, dm, parameters["k0_prime"])
-    output[3*block_size:4*block_size] = calc_gL(diffs,interpolation, dm, parameters["E0_prime"])
+    lum = dif_lum/dm-constants["E0_prime"]*density*jnp.power(interp_temp,4)
+    output = output.at[starting_lum_index+1:starting_lum_index+n_shells].add(lum)
     return output

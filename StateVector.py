@@ -1,4 +1,4 @@
-import numpy as np
+import jax.numpy as jnp
 from enum import Enum
 from Utilities import equation_of_state
 
@@ -31,19 +31,18 @@ class StateVector():
         """
         self.n_shells = n_shells
         self.dm = 1/self.n_shells
-        self.shell_masses = self.dm*np.arange(n_shells)
         if(test_data):
-            output = np.zeros((4*n_shells))
-            output[0:n_shells] = 2*np.arange(n_shells)
-            output[n_shells:2*n_shells] = 3*np.arange(n_shells)
-            output[2*n_shells:3*n_shells] = 5*np.arange(n_shells)
-            output[3*n_shells:4*n_shells] = 7*np.arange(n_shells)
+            output = jnp.zeros((4*n_shells))
+            output =output.at[0:n_shells].add(2*jnp.arange(n_shells))
+            output =output.at[n_shells:2*n_shells].add(3*jnp.arange(n_shells))
+            output =output.at[2*n_shells:3*n_shells].add(5*jnp.arange(n_shells))
+            output =output.at[3*n_shells:4*n_shells].add(7*jnp.arange(n_shells))
         else:
-            output = np.zeros((4*n_shells))
-            output[0:n_shells] = np.linspace(0,1,n_shells)
-            output[n_shells:2*n_shells] = np.linspace(0,1,n_shells)
-            output[2*n_shells:3*n_shells] = np.linspace(0,1,n_shells)
-            output[3*n_shells:4*n_shells] = np.linspace(0,1,n_shells)
+            output = jnp.zeros((4*n_shells))
+            output = output.at[0:n_shells].add(jnp.linspace(0,1,n_shells))
+            output = output.at[n_shells:2*n_shells].add(jnp.linspace(0,1,n_shells))
+            output = output.at[2*n_shells:3*n_shells].add(jnp.linspace(0,1,n_shells))
+            output = output.at[3*n_shells:4*n_shells].add(jnp.linspace(0,1,n_shells))
         starting_indices = self.gen_starting_index()
         self.state_vec, self.starting_indices = output, starting_indices
 
@@ -60,43 +59,42 @@ class StateVector():
         starting_indices[StateVectorVar.LUMINOSITY] = self.n_shells*3
         return starting_indices
         
-    def update_state(self, vector):
-        assert(vector.shape==self.state_vec.shape)
-        temp = self.state_vec+vector
-        if(np.any(temp<0)):
-            return -1
+    def update_state(self, delta):
+        assert(delta.shape==self.state_vec.shape)
+        temp = self.state_vec+delta
+#        if(jnp.any(temp<0)):
+#            return -1
         self.state_vec = temp
         return 0
 
-    def stitch_vector(self):
+
+
+    def stitch_vector(self,vector):
         """
             Removing r_0,P_{k-1}, T_{k-1},L_0 where k is the number of shells.
             This is done to preserve the boundary conditions of the system (the removed elements are all 0).
             By removing these elements, we prevent the Jacobian from going singular.
+            Input:
+                vector: 4*k dimensional array
             Output:
                 out_vec: 4*(k-1) dimensional array
         """
-        dim = self.state_vec.shape[0]
-        assert(dim != 0)
-        assert(dim%4==0)
-        n_shells = int(dim/4)
-        reduced_sv = np.zeros(4*(n_shells-1))
-
+        dim = vector.shape[0]
+        assert(dim == self.state_vec.shape[0])
+        reduced_sv = jnp.zeros(4*(self.n_shells-1))
         starting_rad = self.starting_indices[StateVectorVar.RADIUS]
         starting_p = self.starting_indices[StateVectorVar.PRESSURE]
         starting_temp = self.starting_indices[StateVectorVar.TEMP]
         starting_lum = self.starting_indices[StateVectorVar.LUMINOSITY]
-
-        rad_part = self.state_vec[starting_rad+1:starting_rad+n_shells] # exclude r_0
-        pressure_part = self.state_vec[starting_p:starting_p+n_shells-1] # exclude P_{k-1}
-        temp_part = self.state_vec[starting_temp:starting_temp+n_shells-1] # exclude T_{k-1}
-        lum_part = self.state_vec[starting_lum+1:starting_lum+n_shells] # exclude L_0
-
+        rad_part = vector[starting_rad+1:starting_rad+self.n_shells] # exclude r_0
+        pressure_part = vector[starting_p:starting_p+self.n_shells-1] # exclude P_{k-1}
+        temp_part = vector[starting_temp:starting_temp+self.n_shells-1] # exclude T_{k-1}
+        lum_part = vector[starting_lum+1:starting_lum+self.n_shells] # exclude L_0
         # Need to subtract off from the starting index as you go up to have proper indexing
-        reduced_sv[starting_rad:starting_rad+n_shells-1] = rad_part
-        reduced_sv[starting_p-1:starting_p+n_shells-2] = pressure_part 
-        reduced_sv[starting_temp-2:starting_temp+n_shells-3] = temp_part
-        reduced_sv[starting_lum-3:starting_lum+n_shells-4] = lum_part
+        reduced_sv = reduced_sv.at[starting_rad:starting_rad+self.n_shells-1].add(rad_part)
+        reduced_sv = reduced_sv.at[starting_p-1:starting_p+self.n_shells-2].add(pressure_part)
+        reduced_sv = reduced_sv.at[starting_temp-2:starting_temp+self.n_shells-3].add(temp_part)
+        reduced_sv = reduced_sv.at[starting_lum-3:starting_lum+self.n_shells-4].add(lum_part)
         return reduced_sv
 
     def unstitch_vector(self,reduced_state_vector):
@@ -111,32 +109,42 @@ class StateVector():
         dim = reduced_state_vector.shape[0]
         assert(dim != 0)
         assert(dim%4==0)
-        n_shells_minus_one = int(dim/4)
-        n_shells = n_shells_minus_one+1
-        output = np.zeros(4*n_shells)
-
-
+        assert(dim+4==self.state_vec.shape[0])
+        n_shells_minus_one = self.n_shells-1
+        output = jnp.zeros(4*self.n_shells)
         starting_rad = self.starting_indices[StateVectorVar.RADIUS]
         starting_p = self.starting_indices[StateVectorVar.PRESSURE]
         starting_temp = self.starting_indices[StateVectorVar.TEMP]
         starting_lum = self.starting_indices[StateVectorVar.LUMINOSITY]
-
         # Include additional offset to account for the fact that starting_indices is for original index
         starting_rad_reduced = starting_rad
         starting_p_reduced = starting_p-1
         starting_temp_reduced = starting_temp-2
         starting_lum_reduced = starting_lum-3
-
         rad_part = reduced_state_vector[starting_rad_reduced: starting_rad_reduced+n_shells_minus_one]
         p_part = reduced_state_vector[starting_p_reduced: starting_p_reduced+n_shells_minus_one]
         t_part = reduced_state_vector[starting_temp_reduced: starting_temp_reduced+n_shells_minus_one]
         lum_part = reduced_state_vector[starting_lum_reduced: starting_lum_reduced+n_shells_minus_one]
-
-        output[starting_rad+1: starting_rad+1+n_shells_minus_one] = rad_part # Don't touch r0
-        output[starting_p: starting_p+n_shells_minus_one] = p_part # Don't touch p_{k-1}
-        output[starting_temp: starting_temp+n_shells_minus_one] = t_part # Don't touch T_{k-1}
-        output[starting_lum+1: starting_lum+1+n_shells_minus_one] = lum_part# Don't touch r0
-
+        output = output.at[starting_rad+1: starting_rad+self.n_shells].add(rad_part) # Don't touch r0
+        output = output.at[starting_p: starting_p+self.n_shells-1].add(p_part) # Don't touch p_{k-1}
+        output = output.at[starting_temp: starting_temp+self.n_shells-1].add(t_part) # Don't touch T_{k-1}
+        output = output.at[starting_lum+1: starting_lum+self.n_shells].add(lum_part) # Don't touch r0
+        return output
+    
+    def stich_jacobian(self, jac_matrix):
+        """
+            Remove associated rows and columns of jacobian matrix to make it compatible with boundary conditions
+            Input:
+                jac_matrix: 4k*4k dimensional matrix
+                output: 4*(k-1) square matrix
+        """
+        starting_rad = self.starting_indices[StateVectorVar.RADIUS]
+        starting_p = self.starting_indices[StateVectorVar.PRESSURE]
+        starting_temp = self.starting_indices[StateVectorVar.TEMP]
+        starting_lum = self.starting_indices[StateVectorVar.LUMINOSITY]
+        indicies = jnp.array([starting_rad, starting_p+self.n_shells-1,starting_temp+self.n_shells-1, starting_lum])
+        del_rows = jnp.delete(jac_matrix, indicies , axis=0)
+        output =  jnp.delete(del_rows, indicies, axis=1)
         return output
 
     def extract_variable(self, which_var):
@@ -147,83 +155,19 @@ class StateVector():
             Output:
                 n_shells dimensional np array of variable
         """
-        return self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells]
-
-    def summed_vars(self, which_var):
-        """
-            generate the sum of adjacent shells for a particular variable
-            Inputs:
-                which_var: StateVectorVar
-            Output:
-                (k-1) dimensional array, where each element is the sum of adjacent elements of particular variable.        
-        """
-        first = self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells-1]
-        second = self.state_vec[self.starting_indices[which_var]+1:self.starting_indices[which_var]+self.n_shells]
-        return (first+second)
-
-    def dif_vars(self, which_var):
-        """
-            generate the sum of adjacent shells for a particular variable
-            Inputs:
-                which_var: StateVectorVar
-            Output:
-                (k-1) dimensional array, where each element is the sum of adjacent elements of particular variable.        
-        """
-        first = self.state_vec[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells-1]
-        second = self.state_vec[self.starting_indices[which_var]+1:self.starting_indices[which_var]+self.n_shells]
-        return (second-first)
-    
-    def summed_vars_all(self):
-        """
-            generate the sum for all variables
-            Output:
-                4x(k-1) dimensional array, where each column is the interpolation of that particular variable.
-        """
-        rad = self.summed_vars(StateVectorVar.RADIUS)
-        pres = self.summed_vars(StateVectorVar.PRESSURE)
-        temp = self.summed_vars(StateVectorVar.TEMP)
-        lum = self.summed_vars(StateVectorVar.LUMINOSITY)
-        return np.vstack([rad, pres, temp, lum])
-
-    def interpolate_all(self, constants):
-        """
-            generate the sum for all variables
-            Inputs:
-                constants: dictionary produced by Utilities.generate_extra_parameters()
-            Output:
-                5x(k-1) dimensional array, where each column is the interpolation of that particular variable.
-        """
-        rad = self.summed_vars(StateVectorVar.RADIUS)/2
-        pres = self.summed_vars(StateVectorVar.PRESSURE)/2
-        temp = self.summed_vars(StateVectorVar.TEMP)/2
-        lum = self.summed_vars(StateVectorVar.LUMINOSITY)/2
-        density = equation_of_state(pres, temp, constants)
-        masses = 0.5*(self.shell_masses[0:self.n_shells-1]+self.shell_masses[1:self.n_shells])
-        return np.vstack([rad, pres, temp, lum, density, masses])
-
-    def diff_vars_all(self):
-        """
-            generate the difference for all variables
-            Output:
-                4x(k-1) dimensional array, where each column is the interpolation of that particular variable.
-        """
-        rad = self.dif_vars(StateVectorVar.RADIUS)
-        pres = self.dif_vars(StateVectorVar.PRESSURE)
-        temp = self.dif_vars(StateVectorVar.TEMP)
-        lum = self.dif_vars(StateVectorVar.LUMINOSITY)
-        return np.vstack([rad, pres, temp, lum])
+        return self.state_vec.at[self.starting_indices[which_var]:self.starting_indices[which_var]+self.n_shells]
 
     def save_state(self, filename):
         """
-            Wrapper around np.savetxt()
+            Wrapper around jnp.savetxt()
         """
-        np.savetxt(filename, self.state_vec)
+        jnp.save(filename, self.state_vec)
 
     def load_state(self, filename):
         """
-            Wrapper around np.loadtxt()
+            Wrapper around jnp.loadtxt()
         """
-        cand_state = np.loadtxt(filename)
+        cand_state = jnp.load(filename)
         assert (cand_state.shape[0]%4 ==0)
         self.n_shells = int(cand_state.shape[0]/4)
         self.state_vec = cand_state
