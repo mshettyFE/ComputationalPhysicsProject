@@ -100,14 +100,15 @@ def Jac_block_rl(state_vector_matrix_interp, dm, constants, verbose=False):
     return output
 
 # Difference equation for Pressure
-# (P_{k+1}-P_{k})/(dm) +  (dm/2)/(4*pi*r^{4}_{half})
+# (P_{k+1}-P_{k})/(dm) +  (dm_{half}/2)/(4*pi*r^{4}_{half})
 
 # Radius
 def Jac_block_pr(state_vector_matrix_interp, dm, constants, verbose=False):
     output_dim = state_vector_matrix_interp.shape[1]
     output = np.zeros((output_dim,output_dim))
     interp_rad = state_vector_matrix_interp[InterpolationIndex.RADIUS.value]
-    val = (-1/(4*np.pi)) *dm /np.power(interp_rad,5)
+    mass = state_vector_matrix_interp[InterpolationIndex.MASS.value]
+    val = (-1/(4*np.pi)) *mass /np.power(interp_rad,5)
 
     for shell in range(0,output_dim): # Run through all of the shells
         if (shell == 0): # r_0 doesn't change, so only include \delta r_{1} term

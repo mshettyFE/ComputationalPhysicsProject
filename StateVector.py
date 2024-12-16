@@ -1,20 +1,22 @@
 import numpy as np
-import sys
-from enum import Enum, auto
+from enum import Enum
 from Utilities import equation_of_state
 
+# Allows you to index self.state_vec to extract the associated variables
 class StateVectorVar(Enum):
     RADIUS= 0
     PRESSURE=1
     TEMP=2
     LUMINOSITY=3
 
+# Allows you to index into the interpolated values returned from StateVector.interpolate_all()
 class InterpolationIndex(Enum):
     RADIUS= 0
     PRESSURE=1
     TEMP=2
     LUMINOSITY=3
     DENSITY=4
+    MASS=5
 
 class StateVector():
     def __init__(self, n_shells, test_data=False):
@@ -24,9 +26,12 @@ class StateVector():
                     Assumes that state_vector has the following form:
                     <r_0, r_1,...r_{k-1}, P_0,P_1,...P_{k-1}, T_0,...T_{k-1}, L_0,...L_{k-1}>, where k is the number of shells
                 n_shells: the number of shells used
+                shell_masses: the mass value assigned to each shell
                 starting_indicies: A dictionary housing at what index does each variable begin in the state vector
         """
         self.n_shells = n_shells
+        self.dm = 1/self.n_shells
+        self.shell_masses = self.dm*np.arange(n_shells)
         if(test_data):
             output = np.zeros((4*n_shells))
             output[0:n_shells] = 2*np.arange(n_shells)
@@ -193,7 +198,8 @@ class StateVector():
         temp = self.summed_vars(StateVectorVar.TEMP)/2
         lum = self.summed_vars(StateVectorVar.LUMINOSITY)/2
         density = equation_of_state(pres, temp, constants)
-        return np.vstack([rad, pres, temp, lum, density])
+        masses = 0.5*(self.shell_masses[0:self.n_shells-1]+self.shell_masses[1:self.n_shells])
+        return np.vstack([rad, pres, temp, lum, density, masses])
 
     def diff_vars_all(self):
         """
@@ -208,9 +214,15 @@ class StateVector():
         return np.vstack([rad, pres, temp, lum])
 
     def save_state(self, filename):
+        """
+            Wrapper around np.savetxt()
+        """
         np.savetxt(filename, self.state_vec)
 
     def load_state(self, filename):
+        """
+            Wrapper around np.loadtxt()
+        """
         cand_state = np.loadtxt(filename)
         assert (cand_state.shape[0]%4 ==0)
         self.n_shells = int(cand_state.shape[0]/4)
