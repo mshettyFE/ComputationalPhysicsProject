@@ -25,6 +25,7 @@ class DataGenMode(Enum):
     RANDOM=1
     LINEAR=2
     LOG=3   
+    PHYSICAL=4
 
 class StateVector():
     def __init__(self, n_shells, data_gen_type:DataGenMode):
@@ -85,6 +86,20 @@ class StateVector():
             output = output.at[n_shells:2*n_shells].add(rev_log)
             output = output.at[2*n_shells:3*n_shells].add(rev_log)
             output = output.at[3*n_shells:4*n_shells].add(log)
+        elif (data_gen_type==DataGenMode.PHYSICAL):
+            # Have pressure fall off faster than temperature
+            output = jnp.zeros((4*n_shells))
+            linear = jnp.linspace(0,1,n_shells)
+            exp = jnp.exp(-linear)
+            exp_fast = jnp.exp(-2*linear)
+            output = output.at[0:n_shells].add(linear)
+            output = output.at[n_shells:2*n_shells].add(exp_fast)
+            output = output.at[2*n_shells:3*n_shells].add(exp) 
+            output = output.at[3*n_shells:4*n_shells].add(linear)
+            output = output.at[0].set(1E-9) # r_0 = 0
+            output = output.at[2*n_shells-1].set(1E-9) # P_k-2 = 0
+            output = output.at[3*n_shells-1].set(1E-9) # T_k-2 = 0
+            output = output.at[3*n_shells].set(1E-9) # L_0 = 0
         else:
             print("Undefined data generation mode")
             sys.exit(1)

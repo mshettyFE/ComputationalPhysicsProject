@@ -11,6 +11,6 @@ if __name__ == "__main__":
     scales = Utilities.UnitScalingFactors(mass, rad)
     print(scales)
 #    state, err, initial = NewtonRaphson.NewtonRaphsonWrapper(params,100, 100, 1E4)
-    state, err, initial = NewtonRaphson.NewtonRaphson(params,100, 100, DataGenMode.LOG, verbose=True)
+    state, err, initial = NewtonRaphson.NewtonRaphson(params,100, 100, DataGenMode.PHYSICAL, verbose=True)
     state.save_state("REPLACEME.npy")
     jnp.save("InitialConds.npy",initial)

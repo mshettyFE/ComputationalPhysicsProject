@@ -75,7 +75,7 @@ def NewtonRaphson(parameters, n_shells,max_iters, gen_mode, verbose=False):
             scaled_delta = unstitched_delta*scaling
             state.update_state(scaled_delta, check_neg=False)
         else:
-            for i in range(0,15):
+            for i in range(0,20):
                 scaling = 1/jnp.power(2,i)
                 scaled_delta = unstitched_delta*scaling
                 if (state.update_state(scaled_delta)):
