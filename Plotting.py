@@ -4,6 +4,17 @@ import matplotlib.pyplot as plt
 import Utilities
 
 def plot_save(x,y, fname, title, x_axis, y_axis, log_x=False, log_y=False):
+    """
+        Helper function to streamline plotting
+        Input:
+            x: 1D numpy array
+            y: 1D numpy array of same size as x
+            fname: output filename (str)
+            title: title of plot (str)
+            x_axis: label for x axis (str)
+            y_axis: label for y axis (str)
+            log_x, log_y: specify scales for x and y axis
+    """
     plt.clf()
     plt.scatter(x, y)
     plt.title(title)

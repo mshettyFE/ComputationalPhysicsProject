@@ -90,8 +90,8 @@ class StateVector():
             # Have pressure fall off faster than temperature
             output = jnp.zeros((4*n_shells))
             linear = jnp.linspace(0,1,n_shells)
-            exp = jnp.exp(-linear)
-            exp_fast = jnp.exp(-2*linear)
+            exp = jnp.exp(-2*linear)
+            exp_fast = jnp.exp(-4*linear)
             output = output.at[0:n_shells].add(linear)
             output = output.at[n_shells:2*n_shells].add(exp_fast)
             output = output.at[2*n_shells:3*n_shells].add(exp) 
@@ -120,6 +120,11 @@ class StateVector():
         return starting_indices
         
     def update_state(self, delta, check_neg = True):
+        """
+            Try and update state vector with another delta. Check if any values go negative
+            delta: 1D array that's the same size as self.state_vec
+            check_neg: flag to run negativity check
+        """
         assert(delta.shape==self.state_vec.shape)
         temp = self.state_vec+delta
         if(jnp.any(temp<0) and check_neg):

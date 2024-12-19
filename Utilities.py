@@ -102,12 +102,6 @@ def equation_of_state(p_state,t_state, extra_const_params):
     """
     return (p_state*extra_const_params["mu"])/t_state
 
-def equation_of_state_dp(p_state,t_state, extra_const_params):
-    return (-extra_const_params["mu"])/t_state
-
-def equation_of_state_dt(p_state,t_state, extra_const_params):
-    return (-p_state*extra_const_params["mu"])/jnp.power(t_state,2)
-
 def nuclear_energy(rho_prime, T_prime, extra_const_params):
     """
         generate the nuclear energy production rate given the density and temperature
