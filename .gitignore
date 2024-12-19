@@ -2,3 +2,4 @@ Packages
 __pycache__
 *.png
 *.txt
+*.npy

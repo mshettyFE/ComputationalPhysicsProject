@@ -17,11 +17,11 @@
 
 ## Recurring Setup
 
-* After you set things up initially, you only need to run the following command from the base of the repo:
+* After you set things up initially, you only need to run the following commands from the base of the repo:
 ```
 
 source Packages/bin/activate
-
+JAX_ENABLE_X64=True #needed since some of the scale factors exceed dynamic range of 32-bit
 ```
 
 * Make sure that you exit the virtual environment if you are doing other work. This can be done with
