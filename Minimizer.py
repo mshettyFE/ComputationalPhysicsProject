@@ -114,6 +114,3 @@ def grid_search(Initial_scaled_T, Initial_scaled_P, num_iters, M_0, R_0,mu, grid
             if(state0.shape[0] != 1):
                 output.append((e,k, state0))
     return output  
-
-if __name__ == "__main__":
-    pass

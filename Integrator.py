@@ -78,10 +78,6 @@ def RK4(f, current, step_size, extra_const_params):
     # Return change in variables
     return update
 
-if __name__ == "__main__":
-    pass
-
-
 #Iterates state of system thru RK4, creating an array of the key variables at each mass step.
 def ODESolver(initial_conditions, num_steps, extra_const_parameters, verbose=False):
     """
@@ -111,6 +107,3 @@ def ODESolver(initial_conditions, num_steps, extra_const_parameters, verbose=Fal
     # Generate the output mesh
     o = np.vstack(output)
     return o
-
-if __name__ == "__main__":
-    pass
